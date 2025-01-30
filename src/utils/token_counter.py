@@ -137,20 +137,41 @@ class TokenTracker:
         return summary
 
     def save_to_file(self, output_path: str):
-        """Save token usage summary to a JSON file."""
+        """Save token usage summary to a markdown file."""
         if not self.tracking_enabled or not should_save_usage_report():
             return
             
         summary = self.get_summary_dict()
-        summary['timestamp'] = datetime.now().isoformat()
-        summary['tracking_settings'] = {
-            'token_tracking_enabled': self.tracking_enabled,
-            'display_realtime_usage': should_display_realtime_usage(),
-            'save_usage_report': should_save_usage_report()
-        }
         
         with open(output_path, 'w') as f:
-            json.dump(summary, f, indent=2)
+            # Header
+            f.write("# Token Usage and Cost Report\n\n")
+            f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
+            
+            # Grand Totals
+            f.write("## Grand Totals\n\n")
+            f.write(f"- Total Input Tokens: {summary['grand_total']['input_tokens']:,}\n")
+            f.write(f"- Total Output Tokens: {summary['grand_total']['output_tokens']:,}\n")
+            f.write(f"- Total Cost: ${summary['grand_total']['cost']:.4f}\n\n")
+            
+            # Stage-by-Stage Breakdown
+            f.write("## Stage-by-Stage Breakdown\n\n")
+            for stage, data in summary['stages'].items():
+                f.write(f"### {stage}\n\n")
+                
+                # Stage totals
+                f.write("#### Stage Totals\n")
+                f.write(f"- Input Tokens: {data['total']['input_tokens']:,}\n")
+                f.write(f"- Output Tokens: {data['total']['output_tokens']:,}\n")
+                f.write(f"- Cost: ${data['total']['cost']:.4f}\n\n")
+                
+                # Per-model breakdown
+                f.write("#### Model Breakdown\n")
+                for model, usage in data['models'].items():
+                    f.write(f"**{model}**\n")
+                    f.write(f"- Input Tokens: {usage['input_tokens']:,}\n")
+                    f.write(f"- Output Tokens: {usage['output_tokens']:,}\n")
+                    f.write(f"- Cost: ${usage['cost']:.4f}\n\n")
 
     def get_detailed_cost_breakdown(self) -> dict:
         """Get a detailed breakdown of costs by stage and model."""

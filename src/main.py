@@ -79,25 +79,23 @@ def process_image(image_path: str, token_tracking: bool = None, realtime_display
         
         # Save results
         output_base = os.path.join(output_dir, f"transcription_{image_name}_{timestamp}")
-        result_path = f"{output_base}.md"
+        final_path = os.path.join(output_dir, "FinalOutput.md")
         interim_path = f"{output_base}_interim_analysis.md"
-        token_path = f"{output_base}_token_usage.json"
+        token_path = f"{output_base}_token_usage.md"
         
         # Format final results as markdown
-        markdown_content = "# Chinese Family Tree Transcription Results\n\n"
+        final_content = "# Chinese Family Tree Final Results\n\n"
+        final_content += f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
         
-        # Add each stage's result
-        if "Stage 5 Final Transcription" in result:
-            markdown_content += "## Original Text\n" + result["Stage 5 Final Transcription"] + "\n\n"
-        
+        # Only include final stages in FinalOutput.md
         if "Stage 6 Punctuated Final Transcription" in result:
-            markdown_content += "## Punctuated Text\n" + result["Stage 6 Punctuated Final Transcription"] + "\n\n"
+            final_content += "## Final Punctuated Transcription\n" + result["Stage 6 Punctuated Final Transcription"] + "\n\n"
         
         if "Stage 7 English Translation" in result:
-            markdown_content += "## English Translation\n" + result["Stage 7 English Translation"] + "\n\n"
+            final_content += "## English Translation\n" + result["Stage 7 English Translation"] + "\n\n"
         
         if "Stage 8 Historical Commentary" in result:
-            markdown_content += "## Historical Commentary\n" + result["Stage 8 Historical Commentary"] + "\n\n"
+            final_content += "## Historical Commentary\n" + result["Stage 8 Historical Commentary"] + "\n\n"
         
         # Format interim analysis as markdown
         interim_content = "# Chinese Family Tree Analysis Process\n\n"
@@ -130,9 +128,16 @@ def process_image(image_path: str, token_tracking: bool = None, realtime_display
             if key in result:
                 interim_content += f"### LLM{i}'s Review\n" + result[key] + "\n\n"
         
+        # Add Stage 5 analysis and unpunctuated text
+        interim_content += "## Stage 5: Final Analysis and Authoritative Transcription\n\n"
+        if "Stage 5 Analysis" in result:
+            interim_content += "### Synthesis of Analyses\n" + result["Stage 5 Analysis"] + "\n\n"
+        if "Stage 5 Final Transcription" in result:
+            interim_content += "### FINAL AUTHORITATIVE TRANSCRIPTION (UNPUNCTUATED)\n```\n" + result["Stage 5 Final Transcription"] + "\n```\n\n"
+        
         # Write both formatted results
-        with open(result_path, 'w', encoding='utf-8') as f:
-            f.write(markdown_content)
+        with open(final_path, 'w', encoding='utf-8') as f:
+            f.write(final_content)
             
         with open(interim_path, 'w', encoding='utf-8') as f:
             f.write(interim_content)
@@ -142,7 +147,7 @@ def process_image(image_path: str, token_tracking: bool = None, realtime_display
         
         # Print summary
         print(f"\nProcessing complete!")
-        print(f"Final results saved to: {result_path}")
+        print(f"Final results saved to: {final_path}")
         print(f"Interim analysis saved to: {interim_path}")
         print(f"Token usage saved to: {token_path}")
         token_tracker.print_summary()

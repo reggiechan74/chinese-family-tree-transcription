@@ -15,13 +15,15 @@ class Stage1:
     SYSTEM = """You are an expert in transcribing Chinese family trees using {model_name}. 
 Focus on accurate transcription of traditional characters, proper identification of names and titles, 
 clear distinction between similar-looking characters, recognition of generational markers and relationships, 
-and preservation of special annotations. Output only the transcription text.
+and preservation of special annotations. 
 
 {review_instruction}
 
 {think_instruction}"""
 
-    PROMPT = """Please transcribe this Chinese family tree image. Output only the transcription text, nothing else.
+    PROMPT = """Please transcribe this Chinese family tree image. 
+    Focus solely on the most accurate character identification possible only.  
+    Ignore semantic and historical context at this time. Output only the transcription text, nothing else.
 
 {think_instruction}"""
 
@@ -30,7 +32,7 @@ class Stage2:
     
     # Uses same prompts as Stage 1
     SYSTEM = Stage1.SYSTEM
-    PROMPT = Stage1.PROMPT
+    PROMPT = """Please transcribe this Chinese family tree image.  This time, take into consideration semantic and historical context.  Output only the transcription text, nothing else."""
 
 class Stage3:
     """Analysis stage - Each model analyzes all previous transcriptions"""
@@ -55,16 +57,17 @@ Analyze:
 4. Historical and linguistic insights
 
 Structure your response with:
-1. Transcription Evolution Analysis
-2. Key Patterns Identified
-3. Recommendations for Final Transcription
+1. Transcription Evolution Analysis on a line by line basis
+2. Identify inconsistencies and possible reasons for differences on a line by line basis
+3. Your Recommendations for character swaps on a line by line basis
+3. Your Recommended transcription based on the information provided up to this point.
 
 {review_instruction}
 
 {think_instruction}"""
 
 class Stage4:
-    """Comprehensive review stage - Each model reviews all transcripts and Stage 3 analyses"""
+    """Comprehensive review stage - Each model reviews all transcripts generated to this point and Stage 2 and Stage 3 analyses"""
     
     SYSTEM = """You are an expert in analyzing Chinese family tree transcriptions using {model_name}. 
 Review all previous transcriptions and analyses to provide a comprehensive final recommendation.
@@ -73,23 +76,25 @@ Review all previous transcriptions and analyses to provide a comprehensive final
 
 {think_instruction}"""
 
-    PROMPT = """Review all previous transcriptions and analyses:
+    PROMPT = """Review all previous transcriptions and text analyses (Note: You do not need access to the original image for this stage):
 
 Stage 1 Transcriptions: {stage1_transcriptions}
 Stage 2 Transcriptions: {stage2_transcriptions}
 Stage 3 Analyses: {stage3_analyses}
 
 Provide a comprehensive analysis that:
-1. Reviews all transcription attempts
+1. Reviews all transcription attempts from the provided text
 2. Evaluates previous analyses and recommendations
-3. Identifies consistent patterns and resolves discrepancies
-4. Makes final character-by-character recommendations
+3. Identifies consistent patterns and resolves discrepancies in the analyses
+4. Makes final character-by-character recommendations based on the collective analyses
 
 Structure your response with:
-1. Transcription Review Summary
-2. Analysis of Previous Recommendations
-3. Final Character Recommendations
+1. Transcription Review Summary (based on provided text analyses)
+2. Analysis of Previous Recommendations 
+3. Final Character Recommendations based on your professional opinion
 4. Confidence Assessment
+
+Note: Your analysis should be based entirely on reviewing the previous stages' text content and analyses, not on examining any images.
 
 {review_instruction}
 
@@ -112,7 +117,14 @@ LLM1: {stage4_analyses[llm1]}
 LLM2: {stage4_analyses[llm2]}
 LLM3: {stage4_analyses[llm3]}
 
-Output only the final transcription text, with no additional commentary.
+First, provide a comprehensive synthesis of all analyses:
+1. Areas of Strong Agreement
+2. Resolution of Discrepancies
+3. Character-by-Character Decision Rationale
+4. Final Recommendations for Improvements
+
+Then, clearly label and output "FINAL AUTHORITATIVE TRANSCRIPTION (UNPUNCTUATED):"
+followed by the definitive transcription text.
 
 {think_instruction}"""
 
@@ -131,7 +143,13 @@ while maintaining authenticity.
 Text to punctuate:
 {text}
 
-Output only the punctuated text.
+First, provide your analysis and recommendations for punctuation placement, explaining your reasoning for:
+1. Where you plan to add punctuation marks
+2. Which punctuation marks you will use and why
+3. Any special considerations for maintaining authenticity
+4. How the punctuation will enhance readability
+
+Then, output the punctuated text.
 
 {think_instruction}"""
 
@@ -150,7 +168,13 @@ Preserve the formal structure and relationships.
 Text to translate:
 {text}
 
-Output only the English translation.
+First, provide your analysis and approach for translation, including:
+1. Key translation considerations and challenges
+2. How you will handle names and titles
+3. Strategy for preserving relationships and formal structure
+4. Notes on any culturally significant elements
+
+Then, output the English translation.
 
 {think_instruction}"""
 
@@ -162,7 +186,7 @@ Focus on historical significance, cultural context, and accurate date conversion
 
 {think_instruction}"""
 
-    PROMPT = """Provide a detailed academic commentary on this family tree translation.
+    PROMPT = """First, provide a detailed academic commentary on this family tree translation.
 Include:
 1. Historical significance of individuals and locations
 2. Explanation of specialized terminology and cultural references
@@ -172,11 +196,17 @@ Include:
 Text to analyze:
 {text}
 
-Structure your response with these sections:
+Structure your initial analysis with these sections:
 - Individuals of Historical Significance
 - Locations of Historical Significance
 - Unfamiliar Terms and Cultural References
 - Date Conversions
+
+Then, provide your recommendations for further research or investigation of:
+1. Specific historical events or periods mentioned
+2. Family relationships and social dynamics
+3. Geographic and cultural context
+4. Additional sources for verification
 
 {think_instruction}"""
 

@@ -1,0 +1,152 @@
+{
+  "stages": {
+    "Stage 1: Initial Transcription": {
+      "models": {
+        "LLM1": {
+          "input_tokens": 175,
+          "output_tokens": 116,
+          "cost": 0.0004
+        }
+      },
+      "total": {
+        "input_tokens": 350,
+        "output_tokens": 232,
+        "cost": 0.0008
+      }
+    },
+    "Stage 2: Secondary Transcription": {
+      "models": {
+        "LLM2": {
+          "input_tokens": 175,
+          "output_tokens": 112,
+          "cost": 0.0008
+        },
+        "LLM3": {
+          "input_tokens": 175,
+          "output_tokens": 75,
+          "cost": 0.0016
+        }
+      },
+      "total": {
+        "input_tokens": 700,
+        "output_tokens": 379,
+        "cost": 0.0049
+      }
+    },
+    "Stage 3: Initial Analysis": {
+      "models": {
+        "LLM1": {
+          "input_tokens": 483,
+          "output_tokens": 1824,
+          "cost": 0.0041
+        },
+        "LLM2": {
+          "input_tokens": 474,
+          "output_tokens": 1105,
+          "cost": 0.0061
+        },
+        "LLM3": {
+          "input_tokens": 408,
+          "output_tokens": 437,
+          "cost": 0.0078
+        }
+      },
+      "total": {
+        "input_tokens": 1365,
+        "output_tokens": 3366,
+        "cost": 0.018
+      }
+    },
+    "Stage 4: Comprehensive Review": {
+      "models": {
+        "LLM1": {
+          "input_tokens": 4360,
+          "output_tokens": 1912,
+          "cost": 0.0082
+        },
+        "LLM2": {
+          "input_tokens": 4360,
+          "output_tokens": 1035,
+          "cost": 0.0106
+        },
+        "LLM3": {
+          "input_tokens": 4360,
+          "output_tokens": 556,
+          "cost": 0.0214
+        }
+      },
+      "total": {
+        "input_tokens": 13080,
+        "output_tokens": 3503,
+        "cost": 0.0402
+      }
+    },
+    "Stage 5: Final Transcription": {
+      "models": {
+        "LLM4": {
+          "input_tokens": 1814,
+          "output_tokens": 130,
+          "cost": 0.0021
+        }
+      },
+      "total": {
+        "input_tokens": 1814,
+        "output_tokens": 130,
+        "cost": 0.0021
+      }
+    },
+    "Stage 6: Punctuation": {
+      "models": {
+        "LLM4": {
+          "input_tokens": 242,
+          "output_tokens": 132,
+          "cost": 0.0005
+        }
+      },
+      "total": {
+        "input_tokens": 242,
+        "output_tokens": 132,
+        "cost": 0.0005
+      }
+    },
+    "Stage 7: Translation": {
+      "models": {
+        "LLM4": {
+          "input_tokens": 249,
+          "output_tokens": 840,
+          "cost": 0.0019
+        }
+      },
+      "total": {
+        "input_tokens": 249,
+        "output_tokens": 840,
+        "cost": 0.0019
+      }
+    },
+    "Stage 8: Historical Commentary": {
+      "models": {
+        "LLM4": {
+          "input_tokens": 1026,
+          "output_tokens": 2511,
+          "cost": 0.006
+        }
+      },
+      "total": {
+        "input_tokens": 1026,
+        "output_tokens": 2511,
+        "cost": 0.006
+      }
+    }
+  },
+  "grand_total": {
+    "input_tokens": 18826,
+    "output_tokens": 11093,
+    "cost": 0.0746
+  },
+  "timestamp": "2025-01-30T14:08:33.862006",
+  "tracking_settings": {
+    "token_tracking_enabled": true,
+    "display_realtime_usage": true,
+    "save_usage_report": true
+  }
+}

@@ -1,10 +1,10 @@
-
+"""
+Model factory and provider implementations.
+"""
 import os
 import importlib
 from typing import Union, Any, Dict, Optional
-import google.generativeai as genai
 import sys
-import os
 
 # Add the src directory to the Python path
 current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -25,14 +25,13 @@ class ModelProvider:
         """Get the default maximum tokens for this provider."""
         provider = self.config['provider']
         if provider == 'google':
-            # For Gemini, this is used for output tokens
-            # Input tokens can go up to 2,000,000 but that's handled separately
-            return 32768  # Gemini's max output tokens
+            # Input tokens handled by API
+            return 32768  # Maximum output tokens
         elif provider == 'anthropic':
-            return 8192    # Claude-3.5-sonnet's max tokens
+            return 8192   # Maximum tokens
         elif provider == 'openai':
-            return 4096     # GPT-4's max tokens
-        return 8192        # Conservative default
+            return 4096   # Maximum tokens
+        return 8192      # Conservative default
 
     @property
     def api_key(self) -> str:
@@ -40,12 +39,7 @@ class ModelProvider:
         if self._api_key is None:
             self._api_key = os.getenv(self.config['api_key_var'])
             if not self._api_key:
-                provider_name = {
-                    'openai': 'OpenAI',
-                    'anthropic': 'Anthropic',
-                    'google': 'Google'
-                }.get(self.config['provider'], self.config['provider'].title())
-                raise Exception(f"{provider_name} API error: Missing API key. Please check your environment configuration.")
+                raise Exception("Authentication error: Please check your environment configuration.")
         return self._api_key
 
     @property
@@ -62,16 +56,21 @@ class ModelProvider:
         raise NotImplementedError
 
 class GeminiProvider(ModelProvider):
-    """Provider for Google's Gemini models."""
+    """Provider implementation."""
     def _initialize_client(self) -> Any:
-        genai.configure(api_key=self.api_key)
-        if self.config["requires_model_name_param"]:
-            return genai.GenerativeModel(model_name=self.config["name"])
-        return genai.GenerativeModel(self.config["name"])
+        try:
+            genai = importlib.import_module('google.generativeai')
+            genai.configure(api_key=self.api_key)
+            if self.config["requires_model_name_param"]:
+                return genai.GenerativeModel(model_name=self.config["name"])
+            return genai.GenerativeModel(self.config["name"])
+        except ImportError:
+            raise ImportError(
+                "Required package not found. Please check .env.example for setup instructions."
+            )
 
     def generate_content(self, prompt: str, image: Optional[Any] = None, system: Optional[str] = None) -> str:
-        # Gemini has a 2M input token limit handled by the API internally
-        # We only need to set the output token limit in generation_config
+        # Configure generation parameters
         generation_config = {
             'temperature': self.config['temperature'],
             'top_p': self.config['top_p'],
@@ -97,22 +96,21 @@ class GeminiProvider(ModelProvider):
             # Handle API key errors securely
             if 'API key' in str(e):
                 raise Exception("Authentication error: Please verify your API configuration.")
-            # Extract error message from Gemini's error response
+            # Extract error message
             error_msg = str(e)
             if hasattr(e, 'message'):
                 error_msg = e.message
-            raise Exception(f"Gemini API error: {error_msg}")
+            raise Exception(f"API error: {error_msg}")
 
 class AnthropicProvider(ModelProvider):
-    """Provider for Anthropic's Claude models."""
+    """Provider implementation."""
     def _initialize_client(self) -> Any:
         try:
             anthropic = importlib.import_module('anthropic')
             return anthropic.Anthropic(api_key=self.api_key)
         except ImportError:
             raise ImportError(
-                "Anthropic package not found. Install it with:\n"
-                "pip install anthropic httpx"
+                "Required package not found. Please check .env.example for setup instructions."
             )
 
     def generate_content(self, prompt: str, image: Optional[Any] = None, system: Optional[str] = None) -> str:
@@ -155,22 +153,21 @@ class AnthropicProvider(ModelProvider):
             # Handle API key errors securely
             if 'API key' in str(e):
                 raise Exception("Authentication error: Please verify your API configuration.")
-            # Extract error message from Anthropic's error response
+            # Extract error message
             error_msg = str(e)
             if hasattr(e, 'message'):
                 error_msg = e.message
-            raise Exception(f"Anthropic API error: {error_msg}")
+            raise Exception(f"API error: {error_msg}")
 
 class OpenAIProvider(ModelProvider):
-    """Provider for OpenAI's GPT models."""
+    """Provider implementation."""
     def _initialize_client(self) -> Any:
         try:
             openai = importlib.import_module('openai')
             return openai.Client(api_key=self.api_key)
         except ImportError:
             raise ImportError(
-                "OpenAI package not found. Install it with:\n"
-                "pip install openai"
+                "Required package not found. Please check .env.example for setup instructions."
             )
 
     def generate_content(self, prompt: str, image: Optional[Any] = None, system: Optional[str] = None) -> str:
@@ -223,13 +220,13 @@ class OpenAIProvider(ModelProvider):
             # Handle API key errors securely
             if 'API key' in str(e):
                 raise Exception("Authentication error: Please verify your API configuration.")
-            # Extract error message from OpenAI's error response
+            # Extract error message
             error_msg = str(e)
             if hasattr(e, 'response') and hasattr(e.response, 'json'):
                 error_data = e.response.json()
                 if 'error' in error_data:
                     error_msg = error_data['error'].get('message', str(e))
-            raise Exception(f"OpenAI API error: {error_msg}")
+            raise Exception(f"API error: {error_msg}")
 
 class ModelFactory:
     """Factory class to create model instances based on provider configuration."""

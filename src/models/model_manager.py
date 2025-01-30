@@ -200,12 +200,10 @@ class ModelManager:
         
         # If no models configured, raise error
         if not required_keys:
-            print("\nNo models configured. Please configure at least one model in your .env file.")
-            print("\nRequired configuration for each model:")
-            print("1. Set the provider: LLM{N}_PROVIDER")
-            print("2. Set the model: LLM{N}_MODEL")
-            print("3. Set the API key for the chosen provider")
-            print("\nSee .env.example for configuration examples and API key resources.")
+            print("\nConfiguration Error:")
+            print("1. Check .env.example for model configuration")
+            print("2. Configure at least one model following the template")
+            print("\nSee .env.example for complete setup instructions.")
             raise Exception("No models configured. Please check your environment configuration.")
         
         # Check if keys are present
@@ -216,14 +214,9 @@ class ModelManager:
         
         if missing_keys:
             print("\nAuthentication Error:")
-            print("1. Create a .env file in the project root")
-            print("2. Add your API keys following the template in .env.example")
-            print("\nAPI Key Resources:")
-            print("- OpenAI: https://platform.openai.com/api-keys")
-            print("- Anthropic: https://console.anthropic.com/account/keys")
-            print("- Google: https://makersuite.google.com/app/apikey")
-            print("\nError details: Authentication failed. Please verify your API configuration.")
-            
+            print("1. Check .env.example for required API keys")
+            print("2. Verify your API keys are correctly configured")
+            print("\nError details: Authentication failed. Please check your configuration.")
             raise Exception("Authentication failed. Please verify your API configuration.")
 
     def _execute_stage_1(self, image: 'PIL.Image.Image'):

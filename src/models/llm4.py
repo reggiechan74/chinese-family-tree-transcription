@@ -47,18 +47,11 @@ class LLM4Model(FinalStageModel):
         Stage 5: Generate final authoritative transcription based on Stage 4 analyses.
         """
         try:
-            # Extract just the final recommendations from each Stage 4 review
+            # Pass complete Stage 4 reviews without splitting
             stage4_analyses = {}
             for model_num in [1, 2, 3]:
                 review = context.get(f"LLM{model_num}'s Stage 4 Comprehensive Review", "")
-                # Extract just the Final Character Recommendations section
-                if "Final Character Recommendations" in review:
-                    recommendations = review.split("Final Character Recommendations")[1]
-                    if "Confidence Assessment" in recommendations:
-                        recommendations = recommendations.split("Confidence Assessment")[0]
-                    stage4_analyses[f'llm{model_num}'] = recommendations.strip()
-                else:
-                    stage4_analyses[f'llm{model_num}'] = review
+                stage4_analyses[f'llm{model_num}'] = review.strip()
             
             system = format_prompt(
                 Stage5.SYSTEM,

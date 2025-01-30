@@ -79,13 +79,15 @@ def process_image(image_path: str, token_tracking: bool = None, realtime_display
         
         # Save results
         output_base = os.path.join(output_dir, f"transcription_{image_name}_{timestamp}")
-        final_path = os.path.join(output_dir, "FinalOutput.md")
+        final_path = os.path.join(output_dir, f"FinalOutput_{image_name}_{timestamp}.md")
         interim_path = f"{output_base}_interim_analysis.md"
         token_path = f"{output_base}_token_usage.md"
         
         # Format final results as markdown
         final_content = "# Chinese Family Tree Final Results\n\n"
-        final_content += f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n"
+        final_content += f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+        final_content += f"Image File: {os.path.basename(image_path)}\n"
+        final_content += f"System Version: 1.0.0\n\n"
         
         # Only include final stages in FinalOutput.md
         if "Stage 6 Punctuated Final Transcription" in result:
@@ -99,6 +101,9 @@ def process_image(image_path: str, token_tracking: bool = None, realtime_display
         
         # Format interim analysis as markdown
         interim_content = "# Chinese Family Tree Analysis Process\n\n"
+        interim_content += f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+        interim_content += f"Image File: {os.path.basename(image_path)}\n"
+        interim_content += f"System Version: 1.0.0\n\n"
         
         # Add Stage 1 transcriptions
         interim_content += "## Stage 1: Initial Transcriptions\n\n"
@@ -155,24 +160,24 @@ def process_image(image_path: str, token_tracking: bool = None, realtime_display
     except Exception as e:
         print("\n=== Error Summary ===")
         
-        # Check if it's an API key error
+        # Check if it's an authentication error
         error_str = str(e)
-        if "API key" in error_str and "environment variable" in error_str:
-            print("\nAPI Key Error:")
+        if "API key" in error_str or "Authentication" in error_str:
+            print("\nAuthentication Error:")
             print("1. Create a .env file in the project root")
-            print("2. Add your API key to the .env file:")
-            if "OPENAI_API_KEY" in error_str:
-                print("   OPENAI_API_KEY=your-api-key-here")
-                print("   Get your API key from: https://platform.openai.com/api-keys")
-            elif "ANTHROPIC_API_KEY" in error_str:
-                print("   ANTHROPIC_API_KEY=your-api-key-here")
-                print("   Get your API key from: https://console.anthropic.com/account/keys")
-            elif "GOOGLE_API_KEY" in error_str:
-                print("   GOOGLE_API_KEY=your-api-key-here")
-                print("   Get your API key from: https://makersuite.google.com/app/apikey")
-            print("\nFull error message:")
-        
-        print(error_str)
+            print("2. Add your API keys following the template in .env.example")
+            print("\nAPI Key Resources:")
+            print("- OpenAI: https://platform.openai.com/api-keys")
+            print("- Anthropic: https://console.anthropic.com/account/keys")
+            print("- Google: https://makersuite.google.com/app/apikey")
+            print("\nError details: Authentication failed. Please verify your API configuration.")
+        else:
+            # For non-authentication errors, show the error message without sensitive details
+            sanitized_error = error_str.replace(os.path.expanduser("~"), "HOME")
+            for key in os.environ:
+                if "API" in key or "KEY" in key:
+                    sanitized_error = sanitized_error.replace(os.environ[key], "[REDACTED]")
+            print(f"\nError: {sanitized_error}")
         
         # Print token usage summary before exiting
         print("\n=== Token Usage Summary ===")

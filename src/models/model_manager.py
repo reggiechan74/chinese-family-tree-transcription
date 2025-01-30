@@ -1,3 +1,6 @@
+"""
+Model Manager for coordinating all LLM interactions.
+"""
 from typing import Dict, Any, List, TYPE_CHECKING
 import sys
 import os
@@ -199,27 +202,11 @@ class ModelManager:
         if not required_keys:
             print("\nNo models configured. Please configure at least one model in your .env file.")
             print("\nRequired configuration for each model:")
-            print("1. Set the provider: LLM{N}_PROVIDER (e.g., LLM1_PROVIDER=google)")
-            print("2. Set the model: LLM{N}_MODEL (e.g., LLM1_MODEL=gemini-2.0-flash-exp)")
+            print("1. Set the provider: LLM{N}_PROVIDER")
+            print("2. Set the model: LLM{N}_MODEL")
             print("3. Set the API key for the chosen provider")
-            print("\nExample configurations:")
-            print("\nFor LLM1 (Gemini Flash):")
-            print("LLM1_PROVIDER=google")
-            print("LLM1_MODEL=gemini-2.0-flash-exp")
-            print("GEMINI_FLASH_EXP_API_KEY=your-key-here")
-            print("\nFor LLM2 (Gemini Pro):")
-            print("LLM2_PROVIDER=google")
-            print("LLM2_MODEL=gemini-1.5-pro")
-            print("GEMINI_PRO_API_KEY=your-key-here")
-            print("\nFor LLM3 (Claude):")
-            print("LLM3_PROVIDER=anthropic")
-            print("LLM3_MODEL=claude-3-5-sonnet-20241022")
-            print("CLAUDE35_SONNET_API_KEY=your-key-here")
-            print("\nFor LLM4 (Gemini Exp):")
-            print("LLM4_PROVIDER=google")
-            print("LLM4_MODEL=gemini-exp-1206")
-            print("GEMINI_EXP1206_API_KEY=your-key-here")
-            raise Exception("No models configured. Please set LLM{N}_PROVIDER and LLM{N}_MODEL in .env")
+            print("\nSee .env.example for configuration examples and API key resources.")
+            raise Exception("No models configured. Please check your environment configuration.")
         
         # Check if keys are present
         missing_keys = []
@@ -228,18 +215,16 @@ class ModelManager:
                 missing_keys.append(key)
         
         if missing_keys:
-            print("\nMissing Required API Keys:")
-            for key in missing_keys:
-                print(f"\n{key}:")
-                if 'OPENAI' in key:
-                    print("1. Get your API key from: https://platform.openai.com/api-keys")
-                elif 'CLAUDE' in key or 'ANTHROPIC' in key:
-                    print("1. Get your API key from: https://console.anthropic.com/account/keys")
-                elif 'GEMINI' in key:
-                    print("1. Get your API key from: https://makersuite.google.com/app/apikey")
-                print(f"2. Add to your .env file: {key}=your-api-key-here")
+            print("\nAuthentication Error:")
+            print("1. Create a .env file in the project root")
+            print("2. Add your API keys following the template in .env.example")
+            print("\nAPI Key Resources:")
+            print("- OpenAI: https://platform.openai.com/api-keys")
+            print("- Anthropic: https://console.anthropic.com/account/keys")
+            print("- Google: https://makersuite.google.com/app/apikey")
+            print("\nError details: Authentication failed. Please verify your API configuration.")
             
-            raise Exception("Missing required API keys. Please add them to your .env file.")
+            raise Exception("Authentication failed. Please verify your API configuration.")
 
     def _execute_stage_1(self, image: 'PIL.Image.Image'):
         """

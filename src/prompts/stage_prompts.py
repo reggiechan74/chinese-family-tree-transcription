@@ -76,7 +76,8 @@ Review all previous transcriptions and analyses to provide a comprehensive final
 
 {think_instruction}"""
 
-    PROMPT = """Review all previous transcriptions and text analyses (Note: You do not need access to the original image for this stage):
+    PROMPT = """Review all previous transcriptions and text analyses. Provide your complete analysis in a single response without splitting or truncating it.
+Note: You do not need access to the original image for this stage.
 
 Stage 1 Transcriptions: {stage1_transcriptions}
 Stage 2 Transcriptions: {stage2_transcriptions}
@@ -109,8 +110,8 @@ Consider areas of agreement between models and resolve any differences with care
 
 {think_instruction}"""
 
-    PROMPT = """Review these Stage 4 analyses and generate the final authoritative transcription.
-Focus on areas of agreement and resolve any differences to produce the definitive version.
+    PROMPT = """Review these Stage 4 analyses and generate the final authoritative transcription. 
+Provide your complete analysis and transcription in a single response without splitting or truncating it.
 
 Stage 4 analyses:
 LLM1: {stage4_analyses[llm1]}
@@ -137,8 +138,7 @@ Focus on enhancing readability while maintaining authenticity.
 {think_instruction}"""
 
     PROMPT = """Add modern standard Chinese punctuation to this family tree transcription.
-Follow proper Chinese punctuation conventions and ensure the punctuation enhances readability
-while maintaining authenticity.
+Provide your complete analysis and punctuated text in a single response without splitting or truncating it.
 
 Text to punctuate:
 {text}
@@ -162,8 +162,7 @@ Include Pinyin with tone marks for names and preserve the formal structure.
 {think_instruction}"""
 
     PROMPT = """Translate this punctuated Chinese family tree text into English.
-Include Pinyin with tone marks for names (with Chinese characters in parentheses).
-Preserve the formal structure and relationships.
+Provide your complete analysis and translation in a single response without splitting or truncating it.
 
 Text to translate:
 {text}
@@ -174,7 +173,10 @@ First, provide your analysis and approach for translation, including:
 3. Strategy for preserving relationships and formal structure
 4. Notes on any culturally significant elements
 
-Then, output the English translation.
+Then, output the English translation as ACCURATELY AND FAITHFULLY AS POSSIBLE.  
+MAINTAIN A BALANCE BETWEEN LITERAL AND INTERPRETIVE. 
+WHERE A LITERAL TRANSLATION WOULD BE OBSCURE, OPT FOR A MORE INTERPRETIVE APPROACH TO CONVEY THE MEANING CLEARLY IN ENGLISH. 
+IF THERE ARE NAMES, WRITE THEM IN PINYIN WITH TONE MARKS AND PROVIDE THE CHINESE CHARACTERS AS WELL IN ().
 
 {think_instruction}"""
 
@@ -186,7 +188,8 @@ Focus on historical significance, cultural context, and accurate date conversion
 
 {think_instruction}"""
 
-    PROMPT = """First, provide a detailed academic commentary on this family tree translation.
+    PROMPT = """Provide a detailed academic commentary on this family tree translation.
+Deliver your complete analysis and recommendations in a single response without splitting or truncating it.
 Include:
 1. Historical significance of individuals and locations
 2. Explanation of specialized terminology and cultural references

@@ -4,28 +4,32 @@ General configuration settings for the Chinese Family Tree Processing System.
 import os
 from typing import Dict, Any, Optional
 
-# Provider-specific configurations
+# Provider-specific configurations with generic internal key names
 PROVIDER_CONFIGS = {
     'openai': {
-        'api_key_var': 'OPENAI_API_KEY',
+        'api_key_var': '_api_key_1',  # Generic key names to avoid exposing actual env var names
         'models': ['gpt-4', 'gpt-4-vision', 'gpt-3.5-turbo']
     },
     'anthropic': {
-        'api_key_var': 'CLAUDE35_SONNET_API_KEY',
+        'api_key_var': '_api_key_2',
         'models': ['claude-2', 'claude-instant', 'claude-3-5-sonnet-20241022']
     },
     'google': {
-        'api_key_var': 'GEMINI_FLASH_EXP_API_KEY',
+        'api_key_var': '_api_key_3',
         'models': ['gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-pro-vision']
     }
 }
 
-# Model-specific API key mappings
-MODEL_API_KEYS = {
-    ('google', 1): 'GEMINI_FLASH_EXP_API_KEY',
-    ('google', 2): 'GEMINI_PRO_API_KEY',
-    ('google', 4): 'GEMINI_FLASH_EXP_API_KEY',
-    ('anthropic', 3): 'CLAUDE35_SONNET_API_KEY'
+# Internal mapping of model numbers to actual environment variable names
+# This mapping is only used internally and not exposed in error messages
+_ENV_VAR_MAPPING = {
+    '_api_key_1': 'OPENAI_API_KEY',
+    '_api_key_2': 'CLAUDE35_SONNET_API_KEY',
+    '_api_key_3': 'GEMINI_FLASH_EXP_API_KEY',
+    'google_1': 'GEMINI_FLASH_EXP_API_KEY',
+    'google_2': 'GEMINI_PRO_API_KEY',
+    'google_4': 'GEMINI_FLASH_EXP_API_KEY',
+    'anthropic_3': 'CLAUDE35_SONNET_API_KEY'
 }
 
 # Default configurations if not set in environment
@@ -39,7 +43,7 @@ DEFAULT_CONFIGS = {
 def get_provider_config(provider: str) -> Dict[str, Any]:
     """Get provider configuration."""
     if provider not in PROVIDER_CONFIGS:
-        raise ValueError(f"Invalid provider: {provider}. Must be one of: {', '.join(PROVIDER_CONFIGS.keys())}")
+        raise ValueError("Invalid provider configuration")
     return PROVIDER_CONFIGS[provider]
 
 def get_model_config(model_num: int) -> Dict[str, Optional[str]]:
@@ -53,7 +57,7 @@ def get_model_config(model_num: int) -> Dict[str, Optional[str]]:
     
     # Validate provider if set
     if provider and provider not in PROVIDER_CONFIGS:
-        raise ValueError(f"Invalid provider in {provider_var}: {provider}. Must be one of: {', '.join(PROVIDER_CONFIGS.keys())}")
+        raise ValueError("Invalid provider configuration")
     
     return {
         'provider': provider,
@@ -71,7 +75,7 @@ MODEL_CONFIGS = {
 def get_model_init_params(model_num: int) -> Optional[Dict[str, Any]]:
     """Get initialization parameters for a specific model number."""
     if model_num not in MODEL_CONFIGS:
-        raise ValueError(f"Invalid model number: {model_num}")
+        raise ValueError("Invalid model configuration")
     
     config = MODEL_CONFIGS[model_num]
     provider = config['provider']
@@ -82,7 +86,7 @@ def get_model_init_params(model_num: int) -> Optional[Dict[str, Any]]:
         return None
     
     if provider not in PROVIDER_CONFIGS:
-        raise ValueError(f"Invalid provider: {provider}")
+        raise ValueError("Invalid provider configuration")
     
     # Return only the basic config without checking API key
     return {
@@ -92,17 +96,20 @@ def get_model_init_params(model_num: int) -> Optional[Dict[str, Any]]:
         'requires_model_name_param': provider == 'google',  # Gemini requires model name param
         'temperature': 0.7,  # Default temperature
         'top_p': 0.95,      # Default top_p
-        'max_tokens': 8192  # Max tokens for Gemini models
+        'max_tokens': None  # Use model's default maximum token limit
     }
 
 def get_env_var_name(provider: str, model_num: int = None) -> str:
     """Get the environment variable name for a provider's API key."""
     if provider not in PROVIDER_CONFIGS:
-        raise ValueError(f"Invalid provider: {provider}")
+        raise ValueError("Invalid provider configuration")
     
-    # Check for model-specific API key
-    if model_num is not None and (provider, model_num) in MODEL_API_KEYS:
-        return MODEL_API_KEYS[(provider, model_num)]
+    # Use internal mapping to get actual environment variable name
+    if model_num is not None:
+        key = f"{provider}_{model_num}"
+        if key in _ENV_VAR_MAPPING:
+            return _ENV_VAR_MAPPING[key]
     
-    # Default to provider's default API key
-    return PROVIDER_CONFIGS[provider]['api_key_var']
+    # Default to provider's mapped API key
+    provider_key = PROVIDER_CONFIGS[provider]['api_key_var']
+    return _ENV_VAR_MAPPING.get(provider_key, '')

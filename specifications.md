@@ -265,6 +265,10 @@ def process_family_tree_image(image_path):
   - count_tokens()
 - **Provider Options**: OpenAI, Anthropic, Google
 - **Configuration**: Via config.py and environment variables
+- **Token Limits**:
+  - Gemini: Input handled by API (2M limit), 32,768 output tokens
+  - Claude-3.5-sonnet: 8,192 tokens
+  - GPT-4: 4,096 tokens
 
 ### LLM4 (Final Stage Model)
 - **Interface**: FinalStageModel
@@ -276,8 +280,21 @@ def process_family_tree_image(image_path):
   - count_tokens()
 - **Provider**: Configurable via factory
 - **Configuration**: Via config.py and environment variables
+- **Token Limits**: Same as LLM1-3 based on selected provider
 
 ## Token Management
+
+### Token Limits and Handling
+- **Gemini Models**:
+  - Input tokens: 2M limit (handled automatically by API)
+  - Output tokens: 32,768 maximum
+  - No need to specify input token limit
+- **Claude Models**:
+  - Maximum tokens: 8,192
+  - Single max_tokens parameter for output
+- **OpenAI Models**:
+  - Maximum tokens: 4,096
+  - Optional max_tokens parameter for output
 
 ### Tracking Configuration
 - TOKEN_TRACKING_ENABLED (default: true)
@@ -293,15 +310,29 @@ def process_family_tree_image(image_path):
 ## Output Specifications
 
 ### Results File (transcription_[image]_[timestamp].md)
+- Generated: [Date and Time]
 - Final transcription with punctuation
 - English translation with Pinyin
 - Historical commentary
-- Processing metadata
+- Processing metadata:
+  * Date and time of processing
+  * Image file name
+  * System version
 
 ### Token Usage Report (transcription_[image]_[timestamp]_token_usage.json)
-- Per-stage token usage
-- Per-model statistics
-- Cost calculations
+- Per-stage token usage:
+  * Input tokens per model
+  * Output tokens per model
+  * Cost per model
+  * Stage total tokens and cost
+- Per-model statistics:
+  * Total input tokens
+  * Total output tokens
+  * Total cost
+- Grand Totals:
+  * Total input tokens across all stages
+  * Total output tokens across all stages
+  * Total cost for entire process
 - Processing timestamps
 
 ## Error Handling

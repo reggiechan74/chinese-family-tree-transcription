@@ -1,3 +1,4 @@
+
 import os
 import importlib
 from typing import Union, Any, Dict, Optional
@@ -19,6 +20,19 @@ class ModelProvider:
         self._api_key = api_key
         self.config = config
         self._client = None
+        
+    def get_default_max_tokens(self) -> int:
+        """Get the default maximum tokens for this provider."""
+        provider = self.config['provider']
+        if provider == 'google':
+            # For Gemini, this is used for output tokens
+            # Input tokens can go up to 2,000,000 but that's handled separately
+            return 32768  # Gemini's max output tokens
+        elif provider == 'anthropic':
+            return 8192    # Claude-3.5-sonnet's max tokens
+        elif provider == 'openai':
+            return 4096     # GPT-4's max tokens
+        return 8192        # Conservative default
 
     @property
     def api_key(self) -> str:
@@ -31,7 +45,7 @@ class ModelProvider:
                     'anthropic': 'Anthropic',
                     'google': 'Google'
                 }.get(self.config['provider'], self.config['provider'].title())
-                raise Exception(f"{provider_name} API error: Missing API key in environment variable {self.config['api_key_var']}")
+                raise Exception(f"{provider_name} API error: Missing API key. Please check your environment configuration.")
         return self._api_key
 
     @property
@@ -56,10 +70,12 @@ class GeminiProvider(ModelProvider):
         return genai.GenerativeModel(self.config["name"])
 
     def generate_content(self, prompt: str, image: Optional[Any] = None, system: Optional[str] = None) -> str:
+        # Gemini has a 2M input token limit handled by the API internally
+        # We only need to set the output token limit in generation_config
         generation_config = {
             'temperature': self.config['temperature'],
             'top_p': self.config['top_p'],
-            'max_output_tokens': self.config['max_tokens']
+            'max_output_tokens': self.config['max_tokens'] if self.config['max_tokens'] is not None else self.get_default_max_tokens()
         }
         
         try:
@@ -78,9 +94,9 @@ class GeminiProvider(ModelProvider):
             
             return response.text
         except Exception as e:
-            # Re-raise API key errors directly
+            # Handle API key errors securely
             if 'API key' in str(e):
-                raise
+                raise Exception("Authentication error: Please verify your API configuration.")
             # Extract error message from Gemini's error response
             error_msg = str(e)
             if hasattr(e, 'message'):
@@ -121,8 +137,8 @@ class AnthropicProvider(ModelProvider):
 
         message_params = {
             "model": self.config["name"],
-            "max_tokens": self.config["max_tokens"],
             "temperature": self.config["temperature"],
+            "max_tokens": self.config['max_tokens'] if self.config['max_tokens'] is not None else self.get_default_max_tokens(),
             "messages": [{
                 "role": "user",
                 "content": messages_content
@@ -136,9 +152,9 @@ class AnthropicProvider(ModelProvider):
             response = self.client.messages.create(**message_params)
             return response.content[0].text
         except Exception as e:
-            # Re-raise API key errors directly
+            # Handle API key errors securely
             if 'API key' in str(e):
-                raise
+                raise Exception("Authentication error: Please verify your API configuration.")
             # Extract error message from Anthropic's error response
             error_msg = str(e)
             if hasattr(e, 'message'):
@@ -191,18 +207,22 @@ class OpenAIProvider(ModelProvider):
             })
 
         try:
-            response = self.client.chat.completions.create(
-                model=self.config["name"],
-                messages=messages,
-                max_tokens=self.config["max_tokens"],
-                temperature=self.config["temperature"]
-            )
+            params = {
+                "model": self.config["name"],
+                "messages": messages,
+                "temperature": self.config["temperature"]
+            }
+            # Only add max_tokens if explicitly set
+            if self.config['max_tokens'] is not None:
+                params["max_tokens"] = self.config["max_tokens"]
+            
+            response = self.client.chat.completions.create(**params)
             
             return response.choices[0].message.content
         except Exception as e:
-            # Re-raise API key errors directly
+            # Handle API key errors securely
             if 'API key' in str(e):
-                raise
+                raise Exception("Authentication error: Please verify your API configuration.")
             # Extract error message from OpenAI's error response
             error_msg = str(e)
             if hasattr(e, 'response') and hasattr(e.response, 'json'):

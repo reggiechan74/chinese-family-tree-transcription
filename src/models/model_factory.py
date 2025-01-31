@@ -179,21 +179,26 @@ class OpenAIProvider(ModelProvider):
                 "content": system
             })
         
-        # Only handle image if it's a PIL Image or dict with 'base64' key
-        if image and (isinstance(image, dict) and 'base64' in image or 'PIL' in str(type(image))):
-            image_bytes = image.get('base64') if isinstance(image, dict) else convert_to_base64(image)
+        # Handle image for OpenAI
+        if image:
+            try:
+                # Convert image to base64 for OpenAI
+                image_bytes = convert_to_base64(image)
+            except Exception as img_e:
+                raise Exception(f"Failed to convert image to base64 for OpenAI: {str(img_e)}")
             messages.append({
                 "role": "user",
                 "content": [
                     {
-                        "type": "image",
-                        "image_url": {
-                            "url": f"data:image/jpeg;base64,{image_bytes}"
-                        }
-                    },
-                    {
                         "type": "text",
                         "text": prompt
+                    },
+                    {
+                        "type": "image_url",
+                        "image_url": {
+                            "url": f"data:image/jpeg;base64,{image_bytes}",
+                            "detail": "high"
+                        }
                     }
                 ]
             })
@@ -213,7 +218,21 @@ class OpenAIProvider(ModelProvider):
             if self.config['max_tokens'] is not None:
                 params["max_tokens"] = self.config["max_tokens"]
             
-            response = self.client.chat.completions.create(**params)
+            # Add timeout and retry logic
+            max_retries = 3
+            retry_count = 0
+            while retry_count < max_retries:
+                try:
+                    # OpenAI client handles timeouts internally
+                    response = self.client.chat.completions.create(**params)
+                    break
+                except Exception as retry_e:
+                    retry_count += 1
+                    if retry_count == max_retries:
+                        raise retry_e
+                    print(f"Connection error, retrying ({retry_count}/{max_retries})...")
+                    import time
+                    time.sleep(2 ** retry_count)  # Exponential backoff
             
             return response.choices[0].message.content
         except Exception as e:
@@ -226,6 +245,9 @@ class OpenAIProvider(ModelProvider):
                 error_data = e.response.json()
                 if 'error' in error_data:
                     error_msg = error_data['error'].get('message', str(e))
+            # Check for SSL/connection errors
+            if 'ssl' in error_msg.lower() or 'connection' in error_msg.lower():
+                raise Exception(f"Connection error with OpenAI API. Please try again: {error_msg}")
             raise Exception(f"API error: {error_msg}")
 
 class ModelFactory:

@@ -33,7 +33,7 @@ if not env_path.exists():
 load_dotenv(env_path)
 
 from models import ModelManager
-from utils import TokenTracker, load_image, encode_image_for_vision_models
+from utils import TokenTracker, load_image
 
 def process_image(image_path: str, token_tracking: bool = None, realtime_display: bool = None, save_report: bool = None):
     """
@@ -57,17 +57,16 @@ def process_image(image_path: str, token_tracking: bool = None, realtime_display
     token_tracker = TokenTracker()
     
     try:
-        # Load and preprocess image
-        print("\n=== Loading and preprocessing image ===")
+        # Load image
+        print("\n=== Loading image ===")
         image = load_image(image_path)
-        encoded_image = encode_image_for_vision_models(image)
         
         # Initialize model manager
         manager = ModelManager()
         
         # Process image through all stages
         result = manager.process_image(
-            image=encoded_image,
+            image=image,  # Pass raw PIL image
             token_tracker=token_tracker
         )
         

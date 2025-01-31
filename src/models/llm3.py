@@ -49,11 +49,9 @@ class LLM3Model(BaseModel):
             if token_tracker:
                 input_tokens, _ = self.count_tokens(system + prompt)
                 
-            # Extract PIL image from encoded image dict if needed
-            pil_image = image.get('pil') if isinstance(image, dict) else image
-            
-            # Use the provider's generate_content method with system prompt
-            result = self.provider.generate_content(prompt, image=pil_image, system=system)
+            # Pass the image directly to the provider
+            # Provider will handle appropriate format (base64 for OpenAI, PIL for Gemini)
+            result = self.provider.generate_content(prompt, image=image, system=system)
             
             # Track token usage if token_tracker provided
             if token_tracker:

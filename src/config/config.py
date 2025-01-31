@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional
 PROVIDER_CONFIGS = {
     'openai': {
         'api_key_var': '_api_key_1',  # Generic key names to avoid exposing actual env var names
-        'models': ['gpt-4', 'gpt-4-vision', 'gpt-3.5-turbo']
+        'models': ['gpt-4-turbo', 'gpt-4-vision', 'gpt-3.5-turbo']
     },
     'anthropic': {
         'api_key_var': '_api_key_2',
@@ -29,7 +29,7 @@ _ENV_VAR_MAPPING = {
     'google_1': 'GEMINI_FLASH_EXP_API_KEY',
     'google_2': 'GEMINI_PRO_API_KEY',
     'google_4': 'GEMINI_FLASH_EXP_API_KEY',
-    'anthropic_3': 'CLAUDE35_SONNET_API_KEY'
+    'openai_3': 'OPENAI_API_KEY'
 }
 
 # Default configurations if not set in environment

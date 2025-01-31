@@ -116,14 +116,31 @@ def preprocess_image(image: PIL.Image.Image) -> PIL.Image.Image:
         if image.mode != 'RGB':
             image = image.convert('RGB')
         
-        # Ensure reasonable size for OCR
-        max_dimension = 4096
+        # Ensure size meets OpenAI's requirements (max 20MB, reasonable dimensions)
+        max_dimension = 2048
         width, height = image.size
         if width > max_dimension or height > max_dimension:
+            # Calculate scale to fit within max dimension while maintaining aspect ratio
             scale = min(max_dimension/width, max_dimension/height)
             new_width = int(width * scale)
             new_height = int(height * scale)
+            # Use LANCZOS resampling for high quality
             image = image.resize((new_width, new_height), PIL.Image.Resampling.LANCZOS)
+            # Convert to RGB and optimize quality
+            image = image.convert('RGB')
+            # Compress to ensure size is under 20MB
+            img_byte_arr = io.BytesIO()
+            image.save(img_byte_arr, format='JPEG', quality=85, optimize=True)
+            if len(img_byte_arr.getvalue()) > 20 * 1024 * 1024:  # 20MB
+                # If still too large, reduce quality until under limit
+                for quality in [75, 65, 55, 45]:
+                    img_byte_arr = io.BytesIO()
+                    image.save(img_byte_arr, format='JPEG', quality=quality, optimize=True)
+                    if len(img_byte_arr.getvalue()) <= 20 * 1024 * 1024:
+                        break
+            # Load the processed image back
+            img_byte_arr.seek(0)
+            image = PIL.Image.open(img_byte_arr)
         
         return image
     except Exception as e:
@@ -179,7 +196,19 @@ def convert_to_bytes(image: PIL.Image.Image) -> bytes:
     """
     try:
         img_byte_arr = io.BytesIO()
-        image.save(img_byte_arr, format=image.format or 'JPEG')
+        # Convert to RGB if needed
+        if image.mode != 'RGB':
+            image = image.convert('RGB')
+        # Save as JPEG with optimized quality
+        image.save(img_byte_arr, format='JPEG', quality=85, optimize=True)
+        # Check size and reduce quality if needed
+        if len(img_byte_arr.getvalue()) > 20 * 1024 * 1024:  # 20MB
+            for quality in [75, 65, 55, 45]:
+                img_byte_arr = io.BytesIO()
+                image.save(img_byte_arr, format='JPEG', quality=quality, optimize=True)
+                if len(img_byte_arr.getvalue()) <= 20 * 1024 * 1024:
+                    break
+        img_byte_arr.seek(0)
         return img_byte_arr.getvalue()
     except Exception as e:
         raise Exception(f"Error converting image to bytes: {str(e)}")

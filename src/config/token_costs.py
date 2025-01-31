@@ -17,7 +17,7 @@ TOKEN_COSTS = {
         'input': 0.01,    # $0.01 per 1K input tokens
         'output': 0.03    # $0.03 per 1K output tokens
     },
-    'gpt-4': {
+    'gpt-4-turbo': {
         'input': 0.01,
         'output': 0.03
     },
@@ -56,7 +56,7 @@ TOKEN_COSTS = {
 
     # Default rates (used if model not found)
     'default': {
-        'input': 0.01,    # Default to GPT-4 rates
+        'input': 0.01,    # Default to GPT-4 Turbo rates
         'output': 0.03
     }
 }

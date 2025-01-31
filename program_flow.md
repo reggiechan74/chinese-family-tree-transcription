@@ -8,121 +8,162 @@
 
 ```mermaid
 flowchart TD
-    A[Start] --> B[Load Image]
-    B --> C[Initialize Models]
+    %% System Initialization
+    A[Start] --> B[Parse Arguments]
+    B --> C[Load Environment]
+    C --> D[Initialize Token Tracker]
+    D --> E[Load & Encode Image]
     
-    C --> D[Stage 1: Initial Transcription]
-    D --> D1{For each LLM}
-    D1 --> |Process Image| D2[Convert to Base64]
-    D2 --> D3[Generate Transcription]
-    D3 --> D4[Store Result]
-    D4 --> D1
+    %% Context Window Setup
+    E --> F[Initialize Context Window]
+    F --> G[Store Image in Context]
     
-    D1 --> |All Complete| E[Stage 2: Second Transcription]
-    E --> E1{For each LLM}
-    E1 --> |With Context| E2[Generate Transcription]
-    E2 --> E3[Store Result]
-    E3 --> E1
+    %% Parallel Processing Stages
+    G --> H[Stage 1: Initial Transcription]
+    H --> H1{For each Model 1-3}
+    H1 --> |Process Image| H2[Generate Transcription]
+    H2 --> H3[Store in Context]
+    H3 --> |Track Tokens| H4[Update Usage]
+    H4 --> H1
     
-    E1 --> |All Complete| F[Stage 3: Analysis]
-    F --> F1{For each LLM}
-    F1 --> |Compare Own Results| F2[Analyze Differences]
-    F2 --> F3[Make Recommendations]
-    F3 --> F4[Store Analysis]
-    F4 --> F1
+    H1 --> |All Complete| I[Stage 2: Context-Aware]
+    I --> I1{For each Model 1-3}
+    I1 --> |With Context| I2[Generate Transcription]
+    I2 --> I3[Store in Context]
+    I3 --> |Track Tokens| I4[Update Usage]
+    I4 --> I1
     
-    F1 --> |All Complete| G[Stage 4: Comprehensive Review]
-    G --> G1{For each LLM}
-    G1 --> |Review All Data| G2[Analyze All Results]
-    G2 --> G3[Make Final Recommendations]
-    G3 --> G4[Store Review]
-    G4 --> G1
+    I1 --> |All Complete| J[Stage 3: Self-Analysis]
+    J --> J1{For each Model 1-3}
+    J1 --> |Compare Own Results| J2[Analyze Differences]
+    J2 --> J3[Store Analysis]
+    J3 --> |Track Tokens| J4[Update Usage]
+    J4 --> J1
     
-    G1 --> |All Complete| H[Stage 5: Final Transcription]
-    H --> H1[LLM4 Reviews Stage 4]
-    H1 --> H2[Generate Authoritative Version]
+    J1 --> |All Complete| K[Stage 4: Cross-Analysis]
+    K --> K1{For each Model 1-3}
+    K1 --> |Review All Data| K2[Comprehensive Review]
+    K2 --> K3[Store Review]
+    K3 --> |Track Tokens| K4[Update Usage]
+    K4 --> K1
     
-    H2 --> I[Stage 6: Add Punctuation]
-    I --> I1[LLM4 Adds Modern Punctuation]
+    %% Final Processing Stages
+    K1 --> |All Complete| L[Remove Image from Context]
+    L --> M[Stage 5: Final Version]
+    M --> M1[Generate Authoritative Text]
+    M1 --> |Track Tokens| M2[Update Usage]
     
-    I1 --> J[Stage 7: Translation]
-    J --> J1[LLM4 Translates to English]
-    J1 --> J2[Add Pinyin for Names]
+    M2 --> N[Stage 6: Punctuation]
+    N --> N1[Add Modern Punctuation]
+    N1 --> |Track Tokens| N2[Update Usage]
     
-    J2 --> K[Stage 8: Commentary]
-    K --> K1[LLM4 Provides Context]
-    K1 --> K2[Historical Analysis]
+    N2 --> O[Stage 7: Translation]
+    O --> O1[English Translation]
+    O1 --> O2[Add Pinyin]
+    O2 --> |Track Tokens| O3[Update Usage]
     
-    K2 --> L[Final Output]
+    O3 --> P[Stage 8: Commentary]
+    P --> P1[Historical Context]
+    P1 --> P2[Cultural Analysis]
+    P2 --> |Track Tokens| P3[Update Usage]
+    
+    %% Output Generation
+    P3 --> Q[Generate Output Files]
+    Q --> Q1[Final Results MD]
+    Q --> Q2[Interim Analysis MD]
+    Q --> Q3[Token Usage Report]
     
     %% Error Handling
-    B --> |Error| M[Image Error]
-    C --> |Error| N[Model Error]
-    D2 --> |Error| O[Provider Error]
+    E --> |Error| R1[Image Error]
+    F --> |Error| R2[Context Error]
+    H2 --> |Error| R3[Provider Error]
+    Q --> |Error| R4[Output Error]
     
-    subgraph Initial Processing
+    %% Recovery Paths
+    R1 --> |Retry| E
+    R2 --> |Reset| F
+    R3 --> |Fallback| H1
+    R4 --> |Retry| Q
+    
+    subgraph System Setup
+        A
         B
         C
-    end
-    
-    subgraph Multi-LLM Stages
         D
-        D1
-        D2
-        D3
-        D4
         E
-        E1
-        E2
-        E3
         F
-        F1
-        F2
-        F3
-        F4
         G
-        G1
-        G2
-        G3
-        G4
     end
     
-    subgraph Final Processing
+    subgraph Parallel Processing
         H
         H1
         H2
+        H3
+        H4
         I
         I1
+        I2
+        I3
+        I4
         J
         J1
         J2
+        J3
+        J4
         K
         K1
         K2
+        K3
+        K4
+    end
+    
+    subgraph Final Stages
         L
+        M
+        M1
+        M2
+        N
+        N1
+        N2
+        O
+        O1
+        O2
+        O3
+        P
+        P1
+        P2
+        P3
+    end
+    
+    subgraph Output
+        Q
+        Q1
+        Q2
+        Q3
     end
     
     subgraph Error Handling
-        M
-        N
-        O
+        R1
+        R2
+        R3
+        R4
     end
 
-    %% File Operations
-    classDef file fill:#f9f,stroke:#333,stroke-width:2px;
-    class B,D4,E3,F4,G4,L file;
-
-    %% Decision Points
-    classDef decision fill:#bbf,stroke:#333,stroke-width:2px;
-    class D1,E1,F1,G1 decision;
-
-    %% Processing Stages
-    classDef process fill:#bfb,stroke:#333,stroke-width:2px;
-    class D,E,F,G,H,I,J,K process;
-
-    %% Errors
-    classDef error fill:#fbb,stroke:#333,stroke-width:2px;
-    class M,N,O error;
+    %% Styling
+    classDef setup fill:#e1d5e7,stroke:#9673a6;
+    classDef parallel fill:#dae8fc,stroke:#6c8ebf;
+    classDef final fill:#d5e8d4,stroke:#82b366;
+    classDef output fill:#fff2cc,stroke:#d6b656;
+    classDef error fill:#f8cecc,stroke:#b85450;
+    classDef token fill:#ffe6cc,stroke:#d79b00;
+    
+    class A,B,C,D,E,F,G setup;
+    class H,H1,H2,H3,H4,I,I1,I2,I3,I4,J,J1,J2,J3,J4,K,K1,K2,K3,K4 parallel;
+    class L,M,M1,M2,N,N1,N2,O,O1,O2,O3,P,P1,P2,P3 final;
+    class Q,Q1,Q2,Q3 output;
+    class R1,R2,R3,R4 error;
+    class H4,I4,J4,K4,M2,N2,O3,P3 token;
 ```
 
 ## Program Flow Description

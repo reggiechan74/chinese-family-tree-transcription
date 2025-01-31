@@ -368,7 +368,13 @@ class ModelManager:
             self._active_models.append(model)
             model_info = self._get_model_info(8, 1)
             print(f"Processing with {model_info}...")
-            commentary = model.generate_commentary(translation, self.token_tracker)
+            # Get both punctuated Chinese text and English translation for commentary
+            stage6_key = next((k for k in self.context_window if "Stage 6" in k and "Punctuated Transcription" in k), None)
+            if not stage6_key:
+                raise ValueError("Missing Stage 6 punctuated transcription")
+            punctuated_text = self.context_window[stage6_key]
+            
+            commentary = model.generate_commentary(punctuated_text, translation, self.token_tracker)
             if not commentary:
                 raise ValueError("Empty commentary result")
             key = f"{model_info} Commentary"

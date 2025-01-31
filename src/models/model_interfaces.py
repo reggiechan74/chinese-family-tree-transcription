@@ -186,12 +186,13 @@ class FinalStageModel(ReviewModel):
         return ""  # Base implementation for inheritance
     
     @abstractmethod
-    def generate_commentary(self, text: str, token_tracker: TokenTracker = None) -> str:
+    def generate_commentary(self, chinese_text: str, english_text: str, token_tracker: TokenTracker = None) -> str:
         """
         Generate historical commentary on the text.
         
         Args:
-            text: Text to generate commentary for
+            chinese_text: Punctuated Chinese text
+            english_text: English translation
             token_tracker: Optional token tracker for monitoring usage
             
         Returns:

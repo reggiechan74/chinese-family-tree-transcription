@@ -420,12 +420,13 @@ class StageModel(FinalStageModel):
         
         return result['content'].strip()
         
-    def generate_commentary(self, text: str, token_tracker: TokenTracker = None) -> str:
+    def generate_commentary(self, chinese_text: str, english_text: str, token_tracker: TokenTracker = None) -> str:
         """
         Generate historical commentary on the text.
         
         Args:
-            text: Text to generate commentary for
+            chinese_text: Punctuated Chinese text
+            english_text: English translation
             token_tracker: Optional token tracker for monitoring usage
             
         Returns:
@@ -435,10 +436,10 @@ class StageModel(FinalStageModel):
             ValueError: If stage is not stage 8
         """
         # Call parent validation
-        super().generate_commentary(text, token_tracker)
+        super().generate_commentary(chinese_text, english_text, token_tracker)
         
         # Get prompt from Stage8
-        prompt = Stage8.get_prompt(text)
+        prompt = Stage8.get_prompt(chinese_text, english_text)
         
         # Call provider's API
         result = self._generate_content(prompt)

@@ -270,15 +270,21 @@ These models can be used in Stages 3-8 (review, translation, and commentary):
   * Original meaning accurately conveyed
   * Result of independent translation decisions
 
-### Stage 8 - Independent Historical Commentary
+### Stage 8 - Comprehensive Historical Commentary
 - **Input**: 
-  * Final punctuated Chinese text from Stage 6
-  * Final English translation from Stage 7
+  * Final punctuated Chinese text from Stage 6 (required)
+  * Final English translation from Stage 7 (required)
+  * Both texts must be present for commentary generation
   * No access to previous analyses, reviews, or transcription decisions
-  * Both source and translated texts available for reference
+  * Parallel analysis of source and translated texts
 - **Process**: 
   * Independent model (can be any provider)
-  * Works with both Chinese and English texts
+  * Simultaneous analysis of Chinese and English versions
+  * Cross-referential commentary generation:
+    - Compares nuances between Chinese and English texts
+    - Identifies cultural elements that may be lost in translation
+    - Highlights linguistic features specific to Classical Chinese
+    - Notes semantic shifts in the English rendering
   * Makes commentary decisions based on:
     - Historical context and significance
     - Cultural practices and beliefs
@@ -287,10 +293,11 @@ These models can be used in Stages 3-8 (review, translation, and commentary):
     - Social structures and customs
     - Traditional values and norms
     - Historical period context
-    - Nuances in original Chinese text
-    - Cultural concepts that may not fully translate
+    - Linguistic features preserved or adapted
+    - Cultural concepts requiring additional explanation
+  * Synthesizes insights from both language versions
   * No influence from previous stages' analyses
-  * Independent judgment based on both texts
+  * Independent judgment based on parallel text analysis
 - **Output**: Historical commentary stored as:
   * `Stage 8 Model 1 - {Provider16} {Model16} Commentary`
 - **Output Format**:

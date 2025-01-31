@@ -13,7 +13,7 @@ flowchart TD
     
     C --> D[Stage 1: Initial Transcription]
     D --> D1{For each LLM}
-    D1 --> |Process Image| D2[Convert to Provider Format]
+    D1 --> |Process Image| D2[Convert to Base64]
     D2 --> D3[Generate Transcription]
     D3 --> D4[Store Result]
     D4 --> D1
@@ -130,9 +130,14 @@ flowchart TD
 1. **Initial Processing**
    - Load and validate input image
    - Initialize LLM providers (Gemini, OpenAI, Anthropic)
-   - Prepare image formats for each provider
+   - Convert image to standardized Base64 format
 
 2. **Multi-LLM Stages (1-4)**
+   - Parallel Processing
+     * Each stage runs LLMs concurrently
+     * Results synchronized after each stage
+     * All LLMs must complete before next stage
+
    - Stage 1: Initial Transcription
      * Each LLM independently transcribes the image
      * No semantic context considered
@@ -174,11 +179,24 @@ flowchart TD
      * Explains cultural significance
      * Converts dates to Gregorian calendar
 
-4. **Error Handling**
-   - Image processing errors
-   - Model initialization errors
-   - Provider-specific errors
-   - Connection retry logic
+4. **Error Handling & Recovery**
+   - Error Types
+     * Image processing errors (format, size, corruption)
+     * Model initialization errors (API keys, configuration)
+     * Provider-specific errors (rate limits, timeouts)
+     * Network connection issues
+
+   - Recovery Mechanisms
+     * Automatic retries with exponential backoff
+     * Provider failover options
+     * Partial results preservation
+     * Session recovery capability
+
+   - Error Reporting
+     * Detailed error messages
+     * Stage-specific error context
+     * Processing history logs
+     * Token usage at failure
 
 ## Key Components
 
@@ -189,8 +207,9 @@ flowchart TD
 
 2. **Image Processing**
    - `image_utils.py`: Handles image operations
-   - Provider-specific image format conversion
+   - Consistent Base64 conversion for all providers
    - Size and quality optimization
+   - Standard format across LLMs
 
 3. **Stage Processing**
    - `stage_prompts.py`: Defines stage-specific prompts
@@ -199,5 +218,17 @@ flowchart TD
 
 4. **Configuration**
    - `config.py`: System configuration
-   - `token_costs.py`: Usage tracking
    - Environment variables management
+   - Provider-specific settings
+
+5. **Token Management**
+   - `token_costs.py`: Defines cost rates
+   - Real-time token tracking
+   - Usage reporting
+   - Cost calculation
+
+6. **Output Management**
+   - Stores transcriptions by stage
+   - Tracks token usage
+   - Generates usage reports
+   - Maintains processing history

@@ -230,15 +230,15 @@ class ModelManager:
         configured_models = self._get_configured_models()
         for model, model_key in configured_models:
             config = self._get_model_config(model_key)
-            print(f"\nProcessing Stage 1 with model {model_key}...")
-            print(f"- Provider: {config['provider']}")
+            model_info = f"{model_key} - {config['provider'].title()} {config['name']}"
+            print(f"\nProcessing Stage 1 with {model_info}...")
             print(f"- Generating initial transcription...")
             
             # Generate transcription using the shared encoded image
             transcription = model.generate_transcription(image, self.token_tracker)
             
-            # Store transcription in context window
-            key = f"{model_key}'s Stage 1 transcription"
+            # Store transcription in context window with enhanced model info
+            key = f"{model_info}'s Stage 1 transcription"
             self.context_window[key] = transcription
             print(f"- Transcription stored in context window under key: {key}")
         
@@ -275,8 +275,8 @@ class ModelManager:
         configured_models = self._get_configured_models()
         for model, model_key in configured_models:
             config = self._get_model_config(model_key)
-            print(f"\nProcessing Stage 2 with model {model_key}...")
-            print(f"- Provider: {config['provider']}")
+            model_info = f"{model_key} - {config['provider'].title()} {config['name']}"
+            print(f"\nProcessing Stage 2 with {model_info}...")
             print(f"- Generating secondary transcription...")
             
             # Generate transcription using the shared encoded image
@@ -285,8 +285,8 @@ class ModelManager:
                 self.token_tracker
             )
             
-            # Store transcription in context window
-            key = f"{model_key}'s Stage 2 transcription"
+            # Store transcription in context window with enhanced model info
+            key = f"{model_info}'s Stage 2 transcription"
             self.context_window[key] = transcription
             print(f"- Transcription stored in context window under key: {key}")
         
@@ -312,21 +312,21 @@ class ModelManager:
 
         for model, model_key in configured_models:
             config = self._get_model_config(model_key)
-            print(f"\nProcessing Stage 3 with model {model_key}...")
-            print(f"- Provider: {config['provider']}")
+            model_info = f"{model_key} - {config['provider'].title()} {config['name']}"
+            print(f"\nProcessing Stage 3 with {model_info}...")
             print(f"- Analyzing previous transcriptions...")
             
             # Create context with only this model's transcriptions
             model_context = {
-                f"{model_key}'s Stage 1 transcription": self.context_window[f"{model_key}'s Stage 1 transcription"],
-                f"{model_key}'s Stage 2 transcription": self.context_window[f"{model_key}'s Stage 2 transcription"]
+                f"{model_info}'s Stage 1 transcription": self.context_window[f"{model_info}'s Stage 1 transcription"],
+                f"{model_info}'s Stage 2 transcription": self.context_window[f"{model_info}'s Stage 2 transcription"]
             }
             
             # Model analyzes only its own Stage 1 vs Stage 2 transcriptions
             analysis = model.analyze_context(model_context, self.token_tracker)
             
-            # Store analysis in context window
-            key = f"{model_key}'s Stage 3 Analysis and Recommendation"
+            # Store analysis in context window with enhanced model info
+            key = f"{model_info}'s Stage 3 Analysis and Recommendation"
             self.context_window[key] = analysis
             print(f"- Analysis stored in context window under key: {key}")
         
@@ -353,15 +353,15 @@ class ModelManager:
 
         for model, model_key in configured_models:
             config = self._get_model_config(model_key)
-            print(f"\nProcessing Stage 4 with model {model_key}...")
-            print(f"- Provider: {config['provider']}")
+            model_info = f"{model_key} - {config['provider'].title()} {config['name']}"
+            print(f"\nProcessing Stage 4 with {model_info}...")
             print(f"- Performing comprehensive review...")
             
             # Model reviews all previous data and generates final recommendations
             review = model.comprehensive_review(self.context_window, self.token_tracker)
             
-            # Store review in context window
-            key = f"{model_key}'s Stage 4 Comprehensive Review"
+            # Store review in context window with enhanced model info
+            key = f"{model_info}'s Stage 4 Comprehensive Review"
             self.context_window[key] = review
             print(f"- Review stored in context window under key: {key}")
         

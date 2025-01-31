@@ -104,33 +104,43 @@ def process_image(image_path: str, token_tracking: bool = None, realtime_display
         interim_content += f"Image File: {os.path.basename(image_path)}\n"
         interim_content += f"System Version: 1.0.0\n\n"
         
+        # Get model configurations for enhanced identification
+        from config.config import get_model_init_params
+        def get_model_info(i):
+            config = get_model_init_params(i)
+            return f"LLM{i} - {config['provider'].title()} {config['name']}" if config else f"LLM{i}"
+
         # Add Stage 1 transcriptions
         interim_content += "## Stage 1: Initial Transcriptions\n\n"
         for i in range(1, 4):  # LLM1-3
-            key = f"LLM{i}'s Stage 1 transcription"
+            model_info = get_model_info(i)
+            key = f"{model_info}'s Stage 1 transcription"
             if key in result:
-                interim_content += f"### LLM{i}'s Initial Transcription\n" + result[key] + "\n\n"
+                interim_content += f"### {model_info}'s Initial Transcription\n" + result[key] + "\n\n"
         
         # Add Stage 2 transcriptions
         interim_content += "## Stage 2: Secondary Transcriptions\n\n"
         for i in range(1, 4):  # LLM1-3
-            key = f"LLM{i}'s Stage 2 transcription"
+            model_info = get_model_info(i)
+            key = f"{model_info}'s Stage 2 transcription"
             if key in result:
-                interim_content += f"### LLM{i}'s Secondary Transcription\n" + result[key] + "\n\n"
+                interim_content += f"### {model_info}'s Secondary Transcription\n" + result[key] + "\n\n"
         
         # Add Stage 3 analyses
         interim_content += "## Stage 3: Analysis and Recommendations\n\n"
         for i in range(1, 4):  # LLM1-3
-            key = f"LLM{i}'s Stage 3 Analysis and Recommendation"
+            model_info = get_model_info(i)
+            key = f"{model_info}'s Stage 3 Analysis and Recommendation"
             if key in result:
-                interim_content += f"### LLM{i}'s Analysis\n" + result[key] + "\n\n"
+                interim_content += f"### {model_info}'s Analysis\n" + result[key] + "\n\n"
         
         # Add Stage 4 reviews
         interim_content += "## Stage 4: Comprehensive Reviews\n\n"
         for i in range(1, 4):  # LLM1-3
-            key = f"LLM{i}'s Stage 4 Comprehensive Review"
+            model_info = get_model_info(i)
+            key = f"{model_info}'s Stage 4 Comprehensive Review"
             if key in result:
-                interim_content += f"### LLM{i}'s Review\n" + result[key] + "\n\n"
+                interim_content += f"### {model_info}'s Review\n" + result[key] + "\n\n"
         
         # Add Stage 5 analysis and unpunctuated text
         interim_content += "## Stage 5: Final Analysis and Authoritative Transcription\n\n"

@@ -78,13 +78,20 @@ class GeminiProvider(ModelProvider):
         }
         
         try:
-            # Only handle image if it's a PIL Image or dict with 'pil' key
-            if image and (isinstance(image, dict) and 'pil' in image or 'PIL' in str(type(image))):
-                pil_image = image.get('pil') if isinstance(image, dict) else image
-                response = self.client.generate_content(
-                    [prompt, pil_image],
-                    generation_config=generation_config
-                )
+            # Handle Base64 image
+            if image:
+                try:
+                    # Convert to base64 if not already
+                    image_base64 = image.get('base64') if isinstance(image, dict) and 'base64' in image else convert_to_base64(image)
+                    response = self.client.generate_content(
+                        [
+                            {"text": prompt},
+                            {"inline_data": {"mime_type": "image/jpeg", "data": image_base64}}
+                        ],
+                        generation_config=generation_config
+                    )
+                except Exception as img_e:
+                    raise Exception(f"Failed to process image: {str(img_e)}")
             else:
                 response = self.client.generate_content(
                     prompt,
@@ -116,9 +123,13 @@ class AnthropicProvider(ModelProvider):
     def generate_content(self, prompt: str, image: Optional[Any] = None, system: Optional[str] = None) -> str:
         messages_content = []
         
-        # Only handle image if it's a PIL Image or dict with 'base64' key
-        if image and (isinstance(image, dict) and 'base64' in image or 'PIL' in str(type(image))):
-            image_base64 = image.get('base64') if isinstance(image, dict) else convert_to_base64(image)
+        # Handle Base64 image
+        if image:
+            try:
+                # Convert to base64 if not already
+                image_base64 = image.get('base64') if isinstance(image, dict) and 'base64' in image else convert_to_base64(image)
+            except Exception as img_e:
+                raise Exception(f"Failed to process image: {str(img_e)}")
             messages_content.append({
                 "type": "image",
                 "source": {

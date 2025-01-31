@@ -4,6 +4,7 @@ Main entry point for the Chinese Family Tree Processing System.
 """
 import os
 import sys
+import time
 import argparse
 from datetime import datetime
 from pathlib import Path
@@ -35,7 +36,7 @@ load_dotenv(env_path)
 from models import ModelManager
 from utils import TokenTracker, load_image
 
-def process_image(image_path: str, token_tracking: bool = None, realtime_display: bool = None, save_report: bool = None):
+def process_image(image_path: str, token_tracking: bool = None, realtime_display: bool = None, save_report: bool = None) -> float:
     """
     Process a single family tree image through all stages.
     
@@ -44,6 +45,9 @@ def process_image(image_path: str, token_tracking: bool = None, realtime_display
         token_tracking: Override TOKEN_TRACKING_ENABLED env var
         realtime_display: Override DISPLAY_REALTIME_USAGE env var
         save_report: Override SAVE_USAGE_REPORT env var
+        
+    Returns:
+        float: Total processing time in seconds
     """
     # Set environment variables if provided
     if token_tracking is not None:
@@ -55,6 +59,9 @@ def process_image(image_path: str, token_tracking: bool = None, realtime_display
     
     # Initialize components
     token_tracker = TokenTracker()
+    
+    # Start timing
+    start_time = time.time()
     
     try:
         # Load and encode image
@@ -71,105 +78,18 @@ def process_image(image_path: str, token_tracking: bool = None, realtime_display
             token_tracker=token_tracker
         )
         
-        # Generate output filename
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        image_name = os.path.splitext(os.path.basename(image_path))[0]
-        output_dir = os.path.join(current_dir, 'output')
-        os.makedirs(output_dir, exist_ok=True)
+        # Calculate processing time
+        processing_time = time.time() - start_time
         
-        # Save results
-        output_base = os.path.join(output_dir, f"transcription_{image_name}_{timestamp}")
-        final_path = os.path.join(output_dir, f"FinalOutput_{image_name}_{timestamp}.md")
-        interim_path = f"{output_base}_interim_analysis.md"
-        token_path = f"{output_base}_token_usage.md"
-        
-        # Format final results as markdown
-        final_content = "# Chinese Family Tree Final Results\n\n"
-        final_content += f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-        final_content += f"Image File: {os.path.basename(image_path)}\n"
-        final_content += f"System Version: 1.0.0\n\n"
-        
-        # Get final stage results
-        stage6_key = next((k for k in result if "Stage 6" in k and "Punctuated Transcription" in k), None)
-        stage7_key = next((k for k in result if "Stage 7" in k and "Translation" in k), None)
-        stage8_key = next((k for k in result if "Stage 8" in k and "Commentary" in k), None)
-        
-        if stage6_key:
-            final_content += "## Chinese Text with Punctuation\n" + result[stage6_key] + "\n\n"
-        
-        if stage7_key:
-            final_content += "## English Translation\n" + result[stage7_key] + "\n\n"
-        
-        if stage8_key:
-            final_content += "## Historical Commentary\n" + result[stage8_key] + "\n\n"
-        
-        # Format interim analysis as markdown
-        interim_content = "# Chinese Family Tree Analysis Process\n\n"
-        interim_content += f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
-        interim_content += f"Image File: {os.path.basename(image_path)}\n"
-        interim_content += f"System Version: 1.0.0\n\n"
-        
-        # Get model configurations for enhanced identification
-        from config.config import get_model_init_params
-        def get_model_info(stage: int, model_num: int) -> str:
-            config = get_model_init_params(stage, model_num)
-            return f"Stage {stage} Model {model_num} - {config['provider'].title()} {config['name']}"
-
-        # Add Stage 1 transcriptions
-        interim_content += "## Stage 1: Initial Transcriptions\n\n"
-        for model_num in range(1, 4):
-            model_info = get_model_info(1, model_num)
-            key = f"{model_info} Transcription"
-            if key in result:
-                interim_content += f"### {model_info}\n" + result[key] + "\n\n"
-        
-        # Add Stage 2 transcriptions
-        interim_content += "## Stage 2: Secondary Transcriptions\n\n"
-        for model_num in range(1, 4):
-            model_info = get_model_info(2, model_num)
-            key = f"{model_info} Transcription"
-            if key in result:
-                interim_content += f"### {model_info}\n" + result[key] + "\n\n"
-        
-        # Add Stage 3 analyses
-        interim_content += "## Stage 3: Initial Reviews\n\n"
-        for model_num in range(1, 4):
-            model_info = get_model_info(3, model_num)
-            key = f"{model_info} Review"
-            if key in result:
-                interim_content += f"### {model_info}\n" + result[key] + "\n\n"
-        
-        # Add Stage 4 reviews
-        interim_content += "## Stage 4: Comprehensive Reviews\n\n"
-        for model_num in range(1, 4):
-            model_info = get_model_info(4, model_num)
-            key = f"{model_info} Review"
-            if key in result:
-                interim_content += f"### {model_info}\n" + result[key] + "\n\n"
-        
-        # Add Stage 5 final transcription
-        interim_content += "## Stage 5: Final Authoritative Transcription\n\n"
-        stage5_key = next((k for k in result if "Stage 5" in k and "Final Transcription" in k), None)
-        if stage5_key:
-            interim_content += "### Unpunctuated Transcription\n```\n" + result[stage5_key] + "\n```\n\n"
-        
-        # Write both formatted results
-        print("\n=== Saving Results ===")
-        with open(final_path, 'w', encoding='utf-8') as f:
-            f.write(final_content)
-        print(f"- Final results saved to: {final_path}")
-            
-        with open(interim_path, 'w', encoding='utf-8') as f:
-            f.write(interim_content)
-        print(f"- Interim analysis saved to: {interim_path}")
-        
-        # Save token usage
-        token_tracker.save_to_file(token_path)
-        print(f"- Token usage saved to: {token_path}")
+        # Print processing time
+        print(f"\n=== Processing Time ===")
+        print(f"Total time: {processing_time:.2f} seconds")
         
         # Print token usage summary
         print("\n=== Token Usage Summary ===")
         token_tracker.print_summary()
+        
+        return processing_time
         
     except Exception as e:
         print("\n=== Error Summary ===")

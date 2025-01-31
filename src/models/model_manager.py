@@ -5,6 +5,9 @@ from typing import Dict, Any, List, TYPE_CHECKING, Optional
 import sys
 import os
 import json
+import time
+from datetime import datetime
+from pathlib import Path
 
 # Add the src directory to the Python path
 current_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -17,6 +20,7 @@ if TYPE_CHECKING:
 
 from models.model_factory import ModelFactory
 from config.config import get_model_init_params
+from utils.token_counter import count_tokens
 
 class ModelManager:
     """Manager class for coordinating model interactions across stages."""
@@ -30,6 +34,53 @@ class ModelManager:
         
         # Track active models for cleanup
         self._active_models = []
+        
+        # Processing metadata
+        self.start_time = None
+        self.output_dir = None
+        self.timestamp = None
+
+    def _initialize_run(self, image_path: str):
+        """Initialize run-specific variables."""
+        self.start_time = time.time()
+        self.timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        image_name = os.path.splitext(os.path.basename(image_path))[0]
+        self.output_dir = os.path.join(current_dir, 'output', f"run_{self.timestamp}")
+        os.makedirs(self.output_dir, exist_ok=True)
+
+    def _get_processing_time(self) -> float:
+        """Get current processing time."""
+        return time.time() - self.start_time
+
+    def _save_stage_output(self, stage_num: int, content: str, next_stage_data: Dict[str, str] = None):
+        """Save stage output to a markdown file."""
+        if not self.output_dir or not self.timestamp:
+            raise RuntimeError("Output directory not initialized")
+            
+        filename = f"Stage{stage_num}_{self.timestamp}.md"
+        filepath = os.path.join(self.output_dir, filename)
+        
+        # Add header
+        header = f"# Stage {stage_num} Output\n\n"
+        header += f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
+        header += f"Processing Time: {self._get_processing_time():.2f} seconds\n\n"
+        
+        content = header + content
+        
+        if next_stage_data:
+            content += "\n## Data Passed to Next Stage\n\n"
+            total_tokens = 0
+            for key, data in next_stage_data.items():
+                token_count = count_tokens(data)
+                total_tokens += token_count
+                content += f"### {key}\n"
+                content += f"Token count: {token_count:,} tokens\n"
+                content += f"```\n{data}\n```\n\n"
+            content += f"\nTotal tokens being passed to next stage: {total_tokens:,} tokens\n"
+        
+        with open(filepath, 'w', encoding='utf-8') as f:
+            f.write(content)
+        print(f"- Stage {stage_num} output saved to: {filepath}")
 
     @property
     def token_tracker(self):
@@ -86,9 +137,13 @@ class ModelManager:
             stage6_config = get_model_init_params(6, 1)
             return [f"Stage 6 Model 1 - {stage6_config['provider'].title()} {stage6_config['name']} Punctuated Transcription"]
         elif stage == 8:
-            # Stage 8: Needs Stage 7 translation
+            # Stage 8: Needs both Stage 6 punctuated text and Stage 7 translation
+            stage6_config = get_model_init_params(6, 1)
             stage7_config = get_model_init_params(7, 1)
-            return [f"Stage 7 Model 1 - {stage7_config['provider'].title()} {stage7_config['name']} Translation"]
+            return [
+                f"Stage 6 Model 1 - {stage6_config['provider'].title()} {stage6_config['name']} Punctuated Transcription",
+                f"Stage 7 Model 1 - {stage7_config['provider'].title()} {stage7_config['name']} Translation"
+            ]
         else:
             return []
 
@@ -161,6 +216,9 @@ class ModelManager:
             if not isinstance(image_base64, str):
                 raise ValueError("Image data must be a base64 string")
             
+            # Initialize run metadata
+            self._initialize_run(image_base64)
+            
             # Store image in context window for transcription stages only
             self.context_window["image"] = image_base64
 
@@ -221,8 +279,11 @@ class ModelManager:
         if stage not in [1, 2]:
             raise ValueError(f"Invalid transcription stage: {stage}")
             
+        stage_content = ""
+        stage_next = {}
         success_count = 0
         errors = []
+        
         for model_num in range(1, 4):  # 3 models per stage
             model_info = None  # Initialize outside try block
             try:
@@ -237,6 +298,8 @@ class ModelManager:
                     
                 key = f"{model_info} Transcription"
                 self.context_window[key] = transcription
+                stage_content += f"## {model_info}\n" + transcription + "\n\n"
+                stage_next[key] = transcription
                 print("- Transcription completed and stored")
                 success_count += 1
                 
@@ -244,8 +307,14 @@ class ModelManager:
                 error_msg = f"Error with {model_info or f'Stage {stage} Model {model_num}'}: {str(e)}"
                 print(error_msg)
                 errors.append(error_msg)
-                continue
-                
+                # Save output before raising error
+                if stage_content:
+                    self._save_stage_output(stage, stage_content, stage_next)
+                raise RuntimeError(f"Failed to complete Stage {stage} Model {model_num}: {str(e)}") from e
+        
+        # Save stage output
+        self._save_stage_output(stage, stage_content, stage_next)
+        
         if success_count == 0:
             raise RuntimeError(
                 f"All models failed in transcription stage {stage}. Errors:\n" +
@@ -266,8 +335,11 @@ class ModelManager:
         if stage not in [3, 4]:
             raise ValueError(f"Invalid review stage: {stage}")
             
+        stage_content = ""
+        stage_next = {}
         success_count = 0
         errors = []
+        
         for model_num in range(1, 4):  # 3 models per stage
             model_info = None  # Initialize outside try block
             try:
@@ -291,6 +363,8 @@ class ModelManager:
                     
                 key = f"{model_info} Review"
                 self.context_window[key] = review
+                stage_content += f"## {model_info}\n" + review + "\n\n"
+                stage_next[key] = review
                 print("- Results stored in context window")
                 success_count += 1
                 
@@ -298,8 +372,14 @@ class ModelManager:
                 error_msg = f"Error with {model_info or f'Stage {stage} Model {model_num}'}: {str(e)}"
                 print(error_msg)
                 errors.append(error_msg)
-                continue
-                
+                # Save output before raising error
+                if stage_content:
+                    self._save_stage_output(stage, stage_content, stage_next)
+                raise RuntimeError(f"Failed to complete Stage {stage} Model {model_num}: {str(e)}") from e
+        
+        # Save stage output
+        self._save_stage_output(stage, stage_content, stage_next)
+        
         if success_count == 0:
             raise RuntimeError(
                 f"All models failed in review stage {stage}. Errors:\n" +
@@ -331,6 +411,9 @@ class ModelManager:
                 raise ValueError("Empty final transcription result")
             key = f"{model_info} Final Transcription"
             self.context_window[key] = final_transcription
+            stage5_content = "## Final Authoritative Transcription\n```\n" + final_transcription + "\n```\n\n"
+            stage5_next = {key: final_transcription}
+            self._save_stage_output(5, stage5_content, stage5_next)
             print("- Final transcription completed and stored")
             
             # Stage 6: Punctuation
@@ -345,6 +428,9 @@ class ModelManager:
                 raise ValueError("Empty punctuation result")
             key = f"{model_info} Punctuated Transcription"
             self.context_window[key] = punctuated
+            stage6_content = "## Chinese Text with Punctuation\n" + punctuated + "\n\n"
+            stage6_next = {key: punctuated}
+            self._save_stage_output(6, stage6_content, stage6_next)
             print("- Punctuation completed and stored")
             
             # Stage 7: Translation
@@ -359,6 +445,9 @@ class ModelManager:
                 raise ValueError("Empty translation result")
             key = f"{model_info} Translation"
             self.context_window[key] = translation
+            stage7_content = "## English Translation\n" + translation + "\n\n"
+            stage7_next = {key: translation}
+            self._save_stage_output(7, stage7_content, stage7_next)
             print("- Translation completed and stored")
             
             # Stage 8: Commentary
@@ -379,6 +468,9 @@ class ModelManager:
                 raise ValueError("Empty commentary result")
             key = f"{model_info} Commentary"
             self.context_window[key] = commentary
+            stage8_content = "## Historical Commentary\n" + commentary + "\n\n"
+            stage8_content += "\n## Final Stage\nNo data is passed to next stage as this is the final stage."
+            self._save_stage_output(8, stage8_content)
             print("- Commentary completed and stored")
             
         except Exception as e:

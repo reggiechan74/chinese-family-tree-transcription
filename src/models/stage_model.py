@@ -148,10 +148,27 @@ class StageModel(FinalStageModel):
                 }
                 
             elif self.provider == 'anthropic':
-                response = self._client.messages.create(
-                    model=self.model_name,
-                    messages=[{"role": "user", "content": prompt}]
-                )
+                if image:
+                    response = self._client.messages.create(
+                        model=self.model_name,
+                        max_tokens=8192,
+                        messages=[{
+                            "role": "user",
+                            "content": [
+                                {"type": "text", "text": prompt},
+                                {"type": "image", "source": {"type": "base64", "media_type": "image/jpeg", "data": image}}
+                            ]
+                        }]
+                    )
+                else:
+                    response = self._client.messages.create(
+                        model=self.model_name,
+                        max_tokens=8192,
+                        messages=[{
+                            "role": "user",
+                            "content": prompt
+                        }]
+                    )
                 content = response.content[0].text
                 return {
                     'content': content,
@@ -165,8 +182,18 @@ class StageModel(FinalStageModel):
                 raise ValueError(f"Unsupported provider: {self.provider}")
                 
         except Exception as e:
-            print(f"Error generating content with {self.provider} {self.model_name}: {str(e)}")
-            raise
+            error_msg = str(e)
+            if self.provider == 'google' and '500' in error_msg:
+                error_msg = (
+                    f"Error with {self.provider} {self.model_name}: Context window length exceeded. "
+                    f"This model cannot handle the amount of text being processed. "
+                    f"Consider using a model with a larger context window like gemini-2.0-flash-exp or gemini-1.5-pro. "
+                    f"Original error: {error_msg}"
+                )
+            else:
+                error_msg = f"Error generating content with {self.provider} {self.model_name}: {error_msg}"
+            print(error_msg)
+            raise RuntimeError(error_msg)
     
     def generate_transcription(self, image_base64: str, token_tracker: TokenTracker = None) -> str:
         """

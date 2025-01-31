@@ -17,6 +17,7 @@ Please transcribe the Chinese text from this image accurately. Consider:
 4. Preserve all characters exactly as they appear
 
 Provide only the transcription without any explanation or commentary.
+take your time and think it through.
 """
 
 class Stage2:
@@ -28,12 +29,13 @@ class Stage2:
 You are a Chinese text transcription expert. Your task is to accurately transcribe Chinese text from images.
 
 Please provide an independent transcription of this text. Consider:
-1. Focus on accuracy and detail
-2. Maintain original formatting
-3. Pay special attention to similar-looking characters
-4. Do not add punctuation or interpretation
+1. Maintain original formatting and line breaks
+2. Do not add any punctuation
+3. Do not make interpretive changes
+4. Preserve all characters exactly as they appear
 
 Provide only the transcription without any explanation or commentary.
+take your time and think it through.
 """
 
 class Stage3:
@@ -53,20 +55,16 @@ Transcriptions to compare:
 {transcriptions}
 
 Compare these two transcriptions from the same model number and provide a detailed analysis. Consider:
-1. Differences between Stage 1 and Stage 2 transcriptions
-2. Character accuracy and variations
-3. Formatting consistency
-4. Potential errors and ambiguities
-5. Historical context and usage
-6. Areas of high confidence vs. uncertainty
-7. Specific challenging characters or sections
+NOTE CHARACTERS THAT LOOK SIMILAR.  
+MAKE FIRST SET OF RECOMMENDATIONS TO SWAP CHARACTERS IF ABSOLUTELY NECESSARY.
 
 Your response should include:
 1. Detailed analysis of differences between Stage 1 and Stage 2 transcriptions
-2. Specific recommendations for improvements
+2. Identify areas of agreement and disagreement
 3. A suggested final transcription based on reconciling the differences
 
-Provide your analysis, recommendations, and suggested transcription with detailed justification.
+Provide your analysis, recommendations, and suggested transcription with detailed justification including recommended character swaps.
+take your time and think it through.
 """
 
 class Stage4:
@@ -80,22 +78,21 @@ You are a Chinese text review expert. Your task is to review all Stage 3 analyse
 Stage 3 Reviews and Analyses:
 {stage3_reviews}
 
-Review these analyses and recommend a transcription. Consider:
-1. Common patterns and insights across the analyses
-2. Areas of agreement between different reviewers
-3. Well-justified corrections and improvements
-4. Conflicting recommendations and their justifications
-5. Historical and cultural context cited
-6. Classical Chinese grammar and usage notes
-7. Confidence levels expressed in different sections
-8. Specific character or formatting recommendations
+
+1. NOTE CHARACTERS THAT LOOK SIMILAR.  
+2. MAKE FIRST SET OF RECOMMENDATIONS TO SWAP CHARACTERS IF ABSOLUTELY NECESSARY.
 
 Based on these analyses, provide:
 1. A comprehensive review of the Stage 3 analyses
+2. Highlight areas of agreement and disagreement.  This is critical.
 2. Your recommended transcription with detailed justification
 3. Notes on any remaining uncertainties or concerns
+4. NOTE CHARACTERS THAT LOOK SIMILAR.  
+5. MAKE FIRST SET OF RECOMMENDATIONS TO SWAP CHARACTERS IF ABSOLUTELY NECESSARY.
 
-Your review and recommended transcription will be passed to Stage 5 for final evaluation.
+
+Your entire review including recommended character swaps and recommended transcription will be passed to Stage 5 for final evaluation.
+take your time and think it through.
 """
 
 class Stage5:
@@ -113,7 +110,7 @@ Review each Stage 4 analysis and its recommended transcription. You are complete
 1. Each Stage 4 model's review and analysis
 2. Their recommended transcriptions
 3. Justifications provided for their choices
-4. Areas of agreement and disagreement between reviews
+4. Implementing areas of agreement and highlight disagreement between reviews
 5. Confidence levels expressed
 6. Historical and cultural context cited
 7. Grammar and usage notes
@@ -121,7 +118,7 @@ Review each Stage 4 analysis and its recommended transcription. You are complete
 
 Based on your independent review:
 1. Evaluate each Stage 4 model's recommendations
-2. Consider their justifications and evidence
+2. Implement areas of agreement into the final transcription
 3. Form your own opinion about the correct transcription
 4. Make final decisions on any disputed sections
 5. Ensure consistency throughout the text
@@ -129,7 +126,7 @@ Based on your independent review:
 
 Your task is to synthesize all this information and make your own independent judgment to produce the final authoritative transcription.
 
-Provide only the final transcription without any explanation or commentary. This unpunctuated transcription will be passed to Stage 6 for independent punctuation.
+Provide only the final transcription with your final explanation or commentary. This unpunctuated transcription will be passed to Stage 6 for independent punctuation.
 """
 
 class Stage6:
@@ -140,7 +137,7 @@ class Stage6:
         return f"""
 You are a Chinese text expert tasked with adding appropriate modern Chinese punctuation.
 
-You will receive only the final unpunctuated transcription, without any previous analysis or review information.
+You will receive only the final unpunctuated transcription.
 Your task is to independently add punctuation based solely on this text.
 
 Original text:

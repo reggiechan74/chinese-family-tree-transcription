@@ -7,6 +7,7 @@ import json
 from datetime import datetime
 import sys
 import os
+import tiktoken
 
 # Add the src directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -17,6 +18,25 @@ from config.token_costs import (
     should_display_realtime_usage,
     should_save_usage_report
 )
+
+def count_tokens(text: str) -> int:
+    """
+    Count the number of tokens in a text string using GPT-4's tokenizer.
+    
+    Args:
+        text: The text to count tokens for
+        
+    Returns:
+        int: Number of tokens in the text
+    """
+    try:
+        # Use GPT-4's tokenizer
+        enc = tiktoken.encoding_for_model("gpt-4")
+        return len(enc.encode(text))
+    except Exception as e:
+        print(f"Warning: Error counting tokens: {str(e)}")
+        # Fallback to rough character-based estimate
+        return len(text) // 4
 
 @dataclass
 class TokenUsage:

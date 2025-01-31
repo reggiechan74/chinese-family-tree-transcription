@@ -1,8 +1,6 @@
 """
-Prompts package for the Chinese Family Tree Processing System.
-Contains stage-specific prompts and formatting utilities.
+Stage-specific prompts for the Chinese Family Tree Processing System.
 """
-
 from .stage_prompts import (
     Stage1,
     Stage2,
@@ -11,8 +9,7 @@ from .stage_prompts import (
     Stage5,
     Stage6,
     Stage7,
-    Stage8,
-    format_prompt
+    Stage8
 )
 
 __all__ = [
@@ -23,6 +20,5 @@ __all__ = [
     'Stage5',
     'Stage6',
     'Stage7',
-    'Stage8',
-    'format_prompt'
+    'Stage8'
 ]

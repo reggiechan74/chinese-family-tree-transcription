@@ -71,16 +71,16 @@ class TokenTracker:
 
         print(f"\n=== {stage} Token Usage ===")
         for model, usage in self.usage_by_stage[stage].items():
-            print(f"{model}:")
-            print(f"  Input tokens:  {usage.input_tokens:,}")
-            print(f"  Output tokens: {usage.output_tokens:,}")
-            print(f"  Cost: ${usage.cost:.4f}")
+            print(f"- {model}:")
+            print(f"  - Input tokens:  {usage.input_tokens:,}")
+            print(f"  - Output tokens: {usage.output_tokens:,}")
+            print(f"  - Cost: ${usage.cost:.4f}")
         
         stage_total = self.stage_totals[stage]
-        print(f"\n{stage} Totals:")
-        print(f"  Total input tokens:  {stage_total.input_tokens:,}")
-        print(f"  Total output tokens: {stage_total.output_tokens:,}")
-        print(f"  Total cost: ${stage_total.cost:.4f}")
+        print(f"\nStage Totals:")
+        print(f"- Total input tokens:  {stage_total.input_tokens:,}")
+        print(f"- Total output tokens: {stage_total.output_tokens:,}")
+        print(f"- Total cost: ${stage_total.cost:.4f}")
 
     def print_summary(self):
         """Print complete summary of token usage and costs."""
@@ -90,16 +90,16 @@ class TokenTracker:
         print("\n=== Token Usage Summary ===")
         
         for stage in sorted(self.usage_by_stage.keys()):
-            print(f"\n{stage}:")
+            print(f"\n{stage}")
             stage_total = self.stage_totals[stage]
-            print(f"  Input tokens:  {stage_total.input_tokens:,}")
-            print(f"  Output tokens: {stage_total.output_tokens:,}")
-            print(f"  Cost: ${stage_total.cost:.4f}")
+            print(f"- Input tokens:  {stage_total.input_tokens:,}")
+            print(f"- Output tokens: {stage_total.output_tokens:,}")
+            print(f"- Cost: ${stage_total.cost:.4f}")
 
         print("\n=== Grand Totals ===")
-        print(f"Total input tokens:  {self.grand_total.input_tokens:,}")
-        print(f"Total output tokens: {self.grand_total.output_tokens:,}")
-        print(f"Total cost: ${self.grand_total.cost:.4f}")
+        print(f"- Total input tokens:  {self.grand_total.input_tokens:,}")
+        print(f"- Total output tokens: {self.grand_total.output_tokens:,}")
+        print(f"- Total cost: ${self.grand_total.cost:.4f}")
 
     def get_summary_dict(self) -> dict:
         """Get summary as a dictionary for saving to output file."""

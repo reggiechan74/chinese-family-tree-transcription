@@ -57,16 +57,17 @@ def process_image(image_path: str, token_tracking: bool = None, realtime_display
     token_tracker = TokenTracker()
     
     try:
-        # Load image
-        print("\n=== Loading image ===")
-        image = load_image(image_path)
+        # Load and encode image
+        print("\n=== Loading Image ===")
+        image_base64 = load_image(image_path)
+        print("- Image loaded and encoded successfully")
         
         # Initialize model manager
         manager = ModelManager()
         
         # Process image through all stages
         result = manager.process_image(
-            image=image,  # Pass raw PIL image
+            image_base64=image_base64,
             token_tracker=token_tracker
         )
         
@@ -88,15 +89,19 @@ def process_image(image_path: str, token_tracking: bool = None, realtime_display
         final_content += f"Image File: {os.path.basename(image_path)}\n"
         final_content += f"System Version: 1.0.0\n\n"
         
-        # Only include final stages in FinalOutput.md
-        if "Stage 6 Punctuated Final Transcription" in result:
-            final_content += "## Final Punctuated Transcription\n" + result["Stage 6 Punctuated Final Transcription"] + "\n\n"
+        # Get final stage results
+        stage6_key = next((k for k in result if "Stage 6" in k and "Punctuated Transcription" in k), None)
+        stage7_key = next((k for k in result if "Stage 7" in k and "Translation" in k), None)
+        stage8_key = next((k for k in result if "Stage 8" in k and "Commentary" in k), None)
         
-        if "Stage 7 English Translation" in result:
-            final_content += "## English Translation\n" + result["Stage 7 English Translation"] + "\n\n"
+        if stage6_key:
+            final_content += "## Chinese Text with Punctuation\n" + result[stage6_key] + "\n\n"
         
-        if "Stage 8 Historical Commentary" in result:
-            final_content += "## Historical Commentary\n" + result["Stage 8 Historical Commentary"] + "\n\n"
+        if stage7_key:
+            final_content += "## English Translation\n" + result[stage7_key] + "\n\n"
+        
+        if stage8_key:
+            final_content += "## Historical Commentary\n" + result[stage8_key] + "\n\n"
         
         # Format interim analysis as markdown
         interim_content = "# Chinese Family Tree Analysis Process\n\n"
@@ -106,64 +111,64 @@ def process_image(image_path: str, token_tracking: bool = None, realtime_display
         
         # Get model configurations for enhanced identification
         from config.config import get_model_init_params
-        def get_model_info(i):
-            config = get_model_init_params(i)
-            return f"LLM{i} - {config['provider'].title()} {config['name']}" if config else f"LLM{i}"
+        def get_model_info(stage: int, model_num: int) -> str:
+            config = get_model_init_params(stage, model_num)
+            return f"Stage {stage} Model {model_num} - {config['provider'].title()} {config['name']}"
 
         # Add Stage 1 transcriptions
         interim_content += "## Stage 1: Initial Transcriptions\n\n"
-        for i in range(1, 4):  # LLM1-3
-            model_info = get_model_info(i)
-            key = f"{model_info}'s Stage 1 transcription"
+        for model_num in range(1, 4):
+            model_info = get_model_info(1, model_num)
+            key = f"{model_info} Transcription"
             if key in result:
-                interim_content += f"### {model_info}'s Initial Transcription\n" + result[key] + "\n\n"
+                interim_content += f"### {model_info}\n" + result[key] + "\n\n"
         
         # Add Stage 2 transcriptions
         interim_content += "## Stage 2: Secondary Transcriptions\n\n"
-        for i in range(1, 4):  # LLM1-3
-            model_info = get_model_info(i)
-            key = f"{model_info}'s Stage 2 transcription"
+        for model_num in range(1, 4):
+            model_info = get_model_info(2, model_num)
+            key = f"{model_info} Transcription"
             if key in result:
-                interim_content += f"### {model_info}'s Secondary Transcription\n" + result[key] + "\n\n"
+                interim_content += f"### {model_info}\n" + result[key] + "\n\n"
         
         # Add Stage 3 analyses
-        interim_content += "## Stage 3: Analysis and Recommendations\n\n"
-        for i in range(1, 4):  # LLM1-3
-            model_info = get_model_info(i)
-            key = f"{model_info}'s Stage 3 Analysis and Recommendation"
+        interim_content += "## Stage 3: Initial Reviews\n\n"
+        for model_num in range(1, 4):
+            model_info = get_model_info(3, model_num)
+            key = f"{model_info} Review"
             if key in result:
-                interim_content += f"### {model_info}'s Analysis\n" + result[key] + "\n\n"
+                interim_content += f"### {model_info}\n" + result[key] + "\n\n"
         
         # Add Stage 4 reviews
         interim_content += "## Stage 4: Comprehensive Reviews\n\n"
-        for i in range(1, 4):  # LLM1-3
-            model_info = get_model_info(i)
-            key = f"{model_info}'s Stage 4 Comprehensive Review"
+        for model_num in range(1, 4):
+            model_info = get_model_info(4, model_num)
+            key = f"{model_info} Review"
             if key in result:
-                interim_content += f"### {model_info}'s Review\n" + result[key] + "\n\n"
+                interim_content += f"### {model_info}\n" + result[key] + "\n\n"
         
-        # Add Stage 5 analysis and unpunctuated text
-        interim_content += "## Stage 5: Final Analysis and Authoritative Transcription\n\n"
-        if "Stage 5 Analysis" in result:
-            interim_content += "### Synthesis of Analyses\n" + result["Stage 5 Analysis"] + "\n\n"
-        if "Stage 5 Final Transcription" in result:
-            interim_content += "### FINAL AUTHORITATIVE TRANSCRIPTION (UNPUNCTUATED)\n```\n" + result["Stage 5 Final Transcription"] + "\n```\n\n"
+        # Add Stage 5 final transcription
+        interim_content += "## Stage 5: Final Authoritative Transcription\n\n"
+        stage5_key = next((k for k in result if "Stage 5" in k and "Final Transcription" in k), None)
+        if stage5_key:
+            interim_content += "### Unpunctuated Transcription\n```\n" + result[stage5_key] + "\n```\n\n"
         
         # Write both formatted results
+        print("\n=== Saving Results ===")
         with open(final_path, 'w', encoding='utf-8') as f:
             f.write(final_content)
+        print(f"- Final results saved to: {final_path}")
             
         with open(interim_path, 'w', encoding='utf-8') as f:
             f.write(interim_content)
+        print(f"- Interim analysis saved to: {interim_path}")
         
         # Save token usage
         token_tracker.save_to_file(token_path)
+        print(f"- Token usage saved to: {token_path}")
         
-        # Print summary
-        print(f"\nProcessing complete!")
-        print(f"Final results saved to: {final_path}")
-        print(f"Interim analysis saved to: {interim_path}")
-        print(f"Token usage saved to: {token_path}")
+        # Print token usage summary
+        print("\n=== Token Usage Summary ===")
         token_tracker.print_summary()
         
     except Exception as e:

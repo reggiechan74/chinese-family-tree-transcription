@@ -1,238 +1,221 @@
 """
-Stage-specific prompts for all LLM models.
-Each stage includes its relevant system and user message components.
+Stage-specific prompts for the Chinese Family Tree Processing System.
 """
 
-# Common instructions to append to all prompts
-REVIEW_INSTRUCTION = """PLEASE REVIEW TRANSCRIPTION FOR POSSIBLE ERRORS. NOTE CHARACTERS THAT LOOK SIMILAR OR COULD BE CONFUSED. 
-MAKE RECOMMENDATIONS TO SWAP CHARACTERS IF ABSOLUTELY NECESSARY BASED ON CONTEXT AND HISTORICAL KNOWLEDGE."""
-
-THINK_INSTRUCTION = "Take your time and think it through."
-
 class Stage1:
-    """Initial transcription stage - Each model independently transcribes the image"""
+    """Initial transcription stage - Direct transcription from image"""
     
-    SYSTEM = """You are an expert in converting Chinese family tree images to text using {model_name}. 
-Focus on accurate transcription of traditional characters into text format, proper identification of names and titles, 
-clear distinction between visually similar characters, recognition of generational markers and relationships, 
-and faithful text representation of any special annotations.
+    @staticmethod
+    def get_prompt() -> str:
+        return """
+You are a Chinese text transcription expert. Your task is to accurately transcribe Chinese text from images.
 
-{review_instruction}
+Please transcribe the Chinese text from this image accurately. Consider:
+1. Maintain original formatting and line breaks
+2. Do not add any punctuation
+3. Do not make interpretive changes
+4. Preserve all characters exactly as they appear
 
-{think_instruction}"""
-
-    PROMPT = """Please transcribe this Chinese family tree image into text. 
-    Focus solely on accurate character identification and transcription.
-    Ignore semantic and historical context at this time.
-    Output only the transcribed text, nothing else.
-    Do not include any analysis or commentary about the image itself.
-
-{think_instruction}"""
+Provide only the transcription without any explanation or commentary.
+"""
 
 class Stage2:
-    """Secondary transcription stage - Each model makes a second independent attempt"""
+    """Secondary transcription stage - Independent verification"""
     
-    # Uses same prompts as Stage 1
-    SYSTEM = Stage1.SYSTEM
-    PROMPT = """Please transcribe this Chinese family tree image into text.
-This time, consider semantic and historical context while transcribing.
-Focus on accurate character identification with contextual understanding.
-Output only the transcribed text, nothing else.
-Do not include any analysis or commentary about the image itself."""
+    @staticmethod
+    def get_prompt() -> str:
+        return """
+You are a Chinese text transcription expert. Your task is to accurately transcribe Chinese text from images.
+
+Please provide an independent transcription of this text. Consider:
+1. Focus on accuracy and detail
+2. Maintain original formatting
+3. Pay special attention to similar-looking characters
+4. Do not add punctuation or interpretation
+
+Provide only the transcription without any explanation or commentary.
+"""
 
 class Stage3:
-    """Analysis stage - Each model analyzes all previous transcriptions"""
+    """Initial review stage - Compare Stage 1 and 2 transcriptions from corresponding model numbers"""
     
-    SYSTEM = """You are an expert in analyzing Chinese family tree text transcriptions using {model_name}. 
-Provide detailed analysis of character choices and clear recommendations based on textual patterns and historical context.
+    @staticmethod
+    def get_prompt(transcriptions: dict) -> str:
+        return f"""
+You are a Chinese text analysis expert. Your task is to compare and analyze two transcriptions of the same text.
 
-{review_instruction}
+You will be comparing:
+1. A transcription from Stage 1 Model N
+2. A transcription from Stage 2 Model N
+where N is the same model number for both stages.
 
-{think_instruction}"""
+Transcriptions to compare:
+{transcriptions}
 
-    PROMPT = """Review and analyze your own text transcriptions from Stages 1 and 2:
+Compare these two transcriptions from the same model number and provide a detailed analysis. Consider:
+1. Differences between Stage 1 and Stage 2 transcriptions
+2. Character accuracy and variations
+3. Formatting consistency
+4. Potential errors and ambiguities
+5. Historical context and usage
+6. Areas of high confidence vs. uncertainty
+7. Specific challenging characters or sections
 
-Your transcriptions to review:
-Stage 1: {stage1_transcription}
-Stage 2: {stage2_transcription}
+Your response should include:
+1. Detailed analysis of differences between Stage 1 and Stage 2 transcriptions
+2. Specific recommendations for improvements
+3. A suggested final transcription based on reconciling the differences
 
-Analyze the text transcriptions:
-1. Evolution between your two text versions
-2. Areas of consistency and differences in character choices
-3. Character interpretation patterns and potential OCR confusions
-4. Historical and linguistic insights from the text
-
-Structure your response with:
-1. Transcription Evolution Analysis on a line by line basis
-2. Identify inconsistencies and possible reasons for differences on a line by line basis
-3. Your Recommendations for character swaps on a line by line basis
-3. Your Recommended transcription based on the information provided up to this point.
-
-{review_instruction}
-
-{think_instruction}"""
+Provide your analysis, recommendations, and suggested transcription with detailed justification.
+"""
 
 class Stage4:
-    """Comprehensive review stage - Each model reviews all transcripts generated to this point and Stage 2 and Stage 3 analyses"""
+    """Comprehensive review stage - Review Stage 3 analyses"""
     
-    SYSTEM = """You are an expert in analyzing Chinese family tree text transcriptions using {model_name}. 
-Review all previous text transcriptions and analyses to provide a comprehensive final recommendation based on textual evidence and historical context.
+    @staticmethod
+    def get_prompt(stage3_reviews: dict) -> str:
+        return f"""
+You are a Chinese text review expert. Your task is to review all Stage 3 analyses and recommend a transcription.
 
-{review_instruction}
+Stage 3 Reviews and Analyses:
+{stage3_reviews}
 
-{think_instruction}"""
+Review these analyses and recommend a transcription. Consider:
+1. Common patterns and insights across the analyses
+2. Areas of agreement between different reviewers
+3. Well-justified corrections and improvements
+4. Conflicting recommendations and their justifications
+5. Historical and cultural context cited
+6. Classical Chinese grammar and usage notes
+7. Confidence levels expressed in different sections
+8. Specific character or formatting recommendations
 
-    PROMPT = """Review all previous transcriptions and text analyses. Provide your complete analysis in a single response without splitting or truncating it.
-Note: This stage involves analyzing the text content from previous stages' outputs. You will review transcriptions and analyses, not images.
+Based on these analyses, provide:
+1. A comprehensive review of the Stage 3 analyses
+2. Your recommended transcription with detailed justification
+3. Notes on any remaining uncertainties or concerns
 
-Stage 1 Transcriptions: {stage1_transcriptions}
-Stage 2 Transcriptions: {stage2_transcriptions}
-Stage 3 Analyses: {stage3_analyses}
-
-Important: Focus solely on analyzing the text content from previous stages. Do not attempt to reference or analyze any images.
-
-Provide a comprehensive analysis that:
-1. Reviews all transcription attempts from the provided text
-2. Evaluates previous analyses and recommendations
-3. Identifies consistent patterns and resolves discrepancies in the analyses
-4. Makes final character-by-character recommendations based on the collective analyses
-
-Structure your response with:
-1. Transcription Review Summary (based on provided text analyses)
-2. Analysis of Previous Recommendations 
-3. Final Character Recommendations based on your professional opinion
-4. Confidence Assessment
-
-Note: Your analysis should be based entirely on reviewing the previous stages' text content and analyses, not on examining any images.
-
-{review_instruction}
-
-{think_instruction}"""
+Your review and recommended transcription will be passed to Stage 5 for final evaluation.
+"""
 
 class Stage5:
-    """Final authoritative transcription stage - LLM4 reviews Stage 4 analyses"""
+    """Final authoritative transcription stage - Independent review of Stage 4 reviews"""
     
-    SYSTEM = """You are using {model_name} to synthesize text analyses into a final authoritative transcription. 
-Focus on evaluating the textual recommendations from Stage 4 analyses, considering character choices, 
-historical context, and linguistic patterns to produce a single, definitive transcription.
-Resolve any differences between analyses through careful reasoning and textual evidence.
+    @staticmethod
+    def get_prompt(stage4_reviews: dict) -> str:
+        return f"""
+You are a Chinese text expert tasked with independently reviewing all Stage 4 analyses and creating the final authoritative transcription.
 
-{think_instruction}"""
+Stage 4 Reviews and Recommendations:
+{stage4_reviews}
 
-    PROMPT = """Review these Stage 4 text analyses and generate the final authoritative transcription. 
-Provide your complete analysis and transcription in a single response without splitting or truncating it.
-Note: This stage is a text-only analysis based on previous stages' outputs. Focus solely on the text content.
+Review each Stage 4 analysis and its recommended transcription. You are completely independent and should form your own opinion. Consider:
+1. Each Stage 4 model's review and analysis
+2. Their recommended transcriptions
+3. Justifications provided for their choices
+4. Areas of agreement and disagreement between reviews
+5. Confidence levels expressed
+6. Historical and cultural context cited
+7. Grammar and usage notes
+8. Character-specific recommendations
 
-Stage 4 analyses:
-LLM1: {stage4_analyses[llm1]}
-LLM2: {stage4_analyses[llm2]}
-LLM3: {stage4_analyses[llm3]}
+Based on your independent review:
+1. Evaluate each Stage 4 model's recommendations
+2. Consider their justifications and evidence
+3. Form your own opinion about the correct transcription
+4. Make final decisions on any disputed sections
+5. Ensure consistency throughout the text
+6. Validate historical and cultural accuracy
 
-Important: Your analysis should be based entirely on the text content from Stage 4 analyses.
+Your task is to synthesize all this information and make your own independent judgment to produce the final authoritative transcription.
 
-First, provide a comprehensive synthesis of all analyses:
-1. Areas of Strong Agreement
-2. Resolution of Discrepancies
-3. Character-by-Character Decision Rationale
-4. Final Recommendations for Improvements
-
-Then, clearly label and output "FINAL AUTHORITATIVE TRANSCRIPTION (UNPUNCTUATED):"
-followed by the definitive transcription text.
-
-{think_instruction}"""
+Provide only the final transcription without any explanation or commentary. This unpunctuated transcription will be passed to Stage 6 for independent punctuation.
+"""
 
 class Stage6:
-    """Punctuation stage - LLM4 adds modern Chinese punctuation"""
+    """Punctuation stage - Independent punctuation of final transcription"""
     
-    SYSTEM = """You are using {model_name} to enhance text readability through modern Chinese punctuation. 
-Focus on analyzing the unpunctuated text and adding appropriate punctuation marks while maintaining authenticity.
-Your role is to work with the provided text content to improve its clarity through careful punctuation placement.
+    @staticmethod
+    def get_prompt(text: str) -> str:
+        return f"""
+You are a Chinese text expert tasked with adding appropriate modern Chinese punctuation.
 
-{think_instruction}"""
+You will receive only the final unpunctuated transcription, without any previous analysis or review information.
+Your task is to independently add punctuation based solely on this text.
 
-    PROMPT = """Add modern standard Chinese punctuation to this family tree transcription.
-Provide your complete analysis and punctuated text in a single response without splitting or truncating it.
-
-Text to punctuate:
+Original text:
 {text}
 
-First, provide your analysis and recommendations for punctuation placement, explaining your reasoning for:
-1. Where you plan to add punctuation marks
-2. Which punctuation marks you will use and why
-3. Any special considerations for maintaining authenticity
-4. How the punctuation will enhance readability
+Add appropriate modern Chinese punctuation to make the text more readable while preserving its meaning.
+Consider:
+1. Classical Chinese grammar structures
+2. Natural pause points
+3. Logical grouping of ideas
+4. Modern Chinese punctuation conventions
+5. Text flow and readability
+6. Semantic units and relationships
+7. Traditional punctuation patterns for classical texts
 
-Then, output the punctuated text.
-
-{think_instruction}"""
+Make your punctuation decisions independently, based on your expertise and the text itself.
+Provide only the punctuated text without any explanation or commentary. This punctuated text will be passed to Stage 7 for independent translation.
+"""
 
 class Stage7:
-    """Translation stage - LLM4 translates to English with Pinyin"""
+    """Translation stage - Independent translation of punctuated text"""
     
-    SYSTEM = """You are using {model_name} for accurate Chinese text translation. 
-Your role is to convert the Chinese text into English while preserving meaning and structure.
-Focus on accurate translation of characters, proper romanization of names with Pinyin tone marks,
-and maintaining the formal organization of the family tree text.
+    @staticmethod
+    def get_prompt(text: str) -> str:
+        return f"""
+You are a Chinese-English translation expert tasked with translating this classical Chinese text.
 
-{think_instruction}"""
+You will receive only the final punctuated Chinese text, without any previous analysis or review information.
+Your task is to independently translate this text based solely on its content.
 
-    PROMPT = """Translate this punctuated Chinese family tree text into English.
-Provide your complete analysis and translation in a single response without splitting or truncating it.
-
-Text to translate:
+Original text:
 {text}
 
-First, provide your analysis and approach for translation, including:
-1. Key translation considerations and challenges
-2. How you will handle names and titles
-3. Strategy for preserving relationships and formal structure
-4. Notes on any culturally significant elements
+Translate this text into clear, accurate English. Consider:
+1. Classical Chinese grammar structures
+2. Historical and cultural context
+3. Idiomatic expressions
+4. Proper names and titles
+5. Semantic relationships indicated by punctuation
+6. Text flow and readability
+7. Preservation of original meaning
 
-Then, output the English translation as ACCURATELY AND FAITHFULLY AS POSSIBLE.  
-MAINTAIN A BALANCE BETWEEN LITERAL AND INTERPRETIVE. 
-WHERE A LITERAL TRANSLATION WOULD BE OBSCURE, OPT FOR A MORE INTERPRETIVE APPROACH TO CONVEY THE MEANING CLEARLY IN ENGLISH. 
-IF THERE ARE NAMES, WRITE THEM IN PINYIN WITH TONE MARKS AND PROVIDE THE CHINESE CHARACTERS AS WELL IN ().
-
-{think_instruction}"""
+Make your translation decisions independently, based on your expertise and the text itself.
+Provide only the English translation without any explanation or commentary. This translation will be passed to Stage 8 for historical commentary.
+"""
 
 class Stage8:
-    """Commentary stage - LLM4 provides historical and cultural context"""
+    """Commentary stage - Independent historical and cultural commentary"""
     
-    SYSTEM = """You are using {model_name} to provide detailed academic commentary on the translated text. 
-Focus on analyzing the text content for historical significance, cultural context, and date references.
-Your role is to examine the translated family tree text to provide scholarly insights and contextual understanding.
+    @staticmethod
+    def get_prompt(chinese_text: str, english_text: str) -> str:
+        return f"""
+You are a Chinese history and culture expert tasked with providing commentary on this text.
 
-{think_instruction}"""
+You will receive both the punctuated Chinese text and its English translation, without any previous analysis or review information.
+Your task is to independently provide historical and cultural commentary based on both texts.
 
-    PROMPT = """Provide a detailed academic commentary on this family tree translation.
-Deliver your complete analysis and recommendations in a single response without splitting or truncating it.
-Include:
-1. Historical significance of individuals and locations
-2. Explanation of specialized terminology and cultural references
-3. Conversion of traditional Chinese dates to Gregorian calendar
-4. Cultural and social context of the time period
+Punctuated Chinese text:
+{chinese_text}
 
-Text to analyze:
-{text}
+English translation:
+{english_text}
 
-Structure your initial analysis with these sections:
-- Individuals of Historical Significance
-- Locations of Historical Significance
-- Unfamiliar Terms and Cultural References
-- Date Conversions
+Provide historical and cultural commentary. Consider:
+1. Historical context and significance
+2. Cultural practices and beliefs
+3. Family relationships and hierarchy
+4. Notable historical figures or events mentioned
+5. Social structures and customs
+6. Traditional values and norms
+7. Historical period context
+8. Cultural significance of relationships
+9. Nuances that may be clearer in the original Chinese
+10. Cultural concepts that may not fully translate to English
 
-Then, provide your recommendations for further research or investigation of:
-1. Specific historical events or periods mentioned
-2. Family relationships and social dynamics
-3. Geographic and cultural context
-4. Additional sources for verification
-
-{think_instruction}"""
-
-def format_prompt(template: str, **kwargs) -> str:
-    """Format a prompt template with provided values and standard instructions."""
-    return template.format(
-        review_instruction=REVIEW_INSTRUCTION,
-        think_instruction=THINK_INSTRUCTION,
-        **kwargs
-    )
+Make your commentary decisions independently, based on your expertise and both the Chinese and English texts.
+Provide a clear, informative commentary that helps readers understand the deeper context.
+"""

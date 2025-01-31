@@ -1,7 +1,7 @@
 """
 Model Manager for coordinating all LLM interactions.
 """
-from typing import Dict, Any, List, TYPE_CHECKING
+from typing import Dict, Any, List, TYPE_CHECKING, Optional
 import sys
 import os
 import json
@@ -12,11 +12,15 @@ if current_dir not in sys.path:
     sys.path.append(current_dir)
 
 if TYPE_CHECKING:
-    from models.model_interfaces import BaseModel, FinalStageModel
+    from models.model_interfaces import TranscriptionModel, ReviewModel, FinalStageModel
     from utils.token_counter import TokenTracker
-    import PIL.Image
+
+from models.model_factory import ModelFactory
+from config.config import get_model_init_params
 
 class ModelManager:
+    """Manager class for coordinating model interactions across stages."""
+    
     def __init__(self):
         # Shared context window to store all data
         self.context_window: Dict[str, Any] = {}
@@ -24,82 +28,8 @@ class ModelManager:
         # Token tracker (lazy loaded)
         self._token_tracker = None
         
-        # Private model storage
-        self._llm1 = None
-        self._llm2 = None
-        self._llm3 = None
-        self._llm4 = None
-
-    @property
-    def llm1(self) -> 'BaseModel':
-        """Lazy load LLM1"""
-        if self._llm1 is None:
-            from models import LLM1Model
-            self._llm1 = LLM1Model()
-        return self._llm1
-
-    @property
-    def llm2(self) -> 'BaseModel':
-        """Lazy load LLM2"""
-        if self._llm2 is None:
-            from models import LLM2Model
-            self._llm2 = LLM2Model()
-        return self._llm2
-
-    @property
-    def llm3(self) -> 'BaseModel':
-        """Lazy load LLM3"""
-        if self._llm3 is None:
-            from models import LLM3Model
-            self._llm3 = LLM3Model()
-        return self._llm3
-
-    @property
-    def llm4(self) -> 'FinalStageModel':
-        """Lazy load LLM4"""
-        if self._llm4 is None:
-            from models import LLM4Model
-            self._llm4 = LLM4Model()
-        return self._llm4
-
-    @property
-    def model_sequence(self) -> 'List[tuple]':
-        """Get model sequence, creating models only when needed"""
-        return [
-            (self.llm1, "LLM1"),
-            (self.llm2, "LLM2"),
-            (self.llm3, "LLM3")
-        ]
-
-    def _verify_stage_data(self, stage: str, required_keys: List[str]):
-        """Helper method to verify required data is present in context window"""
-        missing_keys = [key for key in required_keys if key not in self.context_window]
-        if missing_keys:
-            print("\nContext Window State:")
-            self._debug_context("Verification Error")
-            raise Exception(f"{stage} incomplete. Missing data: {missing_keys}")
-        
-        # Verify content is not empty
-        empty_keys = [key for key in required_keys if isinstance(self.context_window.get(key), str) 
-                     and not self.context_window[key].strip()]
-        if empty_keys:
-            raise Exception(f"{stage} incomplete. Empty content for: {empty_keys}")
-        
-        print(f"\n{stage} verification passed - All required data present and non-empty")
-
-    def _debug_context(self, stage: str):
-        """Debug helper to verify context window state"""
-        print(f"\nContext Window State after {stage}:")
-        for key, value in self.context_window.items():
-            # Import PIL.Image only when needed for isinstance check
-            if 'PIL' in str(type(value)):
-                import PIL.Image
-                if isinstance(value, PIL.Image.Image):
-                    print(f"- {key}: <PIL.Image.Image object>")
-                    continue
-            # Print first 100 chars of value if it's a string
-            preview = str(value)[:100] + "..." if len(str(value)) > 100 else str(value)
-            print(f"- {key}: {preview}")
+        # Track active models for cleanup
+        self._active_models = []
 
     @property
     def token_tracker(self):
@@ -114,42 +44,152 @@ class ModelManager:
         """Allow setting external token tracker"""
         self._token_tracker = tracker
 
-    def process_image(self, image: 'PIL.Image.Image', token_tracker: 'TokenTracker' = None) -> 'Dict[str, Any]':
+    def _get_model_info(self, stage: int, model_num: int) -> str:
+        """Get formatted model info string."""
+        config = self._get_model_config(stage, model_num)
+        return f"Stage {stage} Model {model_num} - {config['provider'].title()} {config['name']}"
+
+    def _get_model_config(self, stage: int, model_num: int) -> Dict[str, Any]:
+        """Get model configuration for a specific stage and model number."""
+        return get_model_init_params(stage, model_num)
+
+    def _get_stage_dependencies(self, stage: int, model_num: int) -> List[str]:
+        """Get required keys for a stage based on its dependencies."""
+        if stage == 3:
+            # Stage 3: Each model needs transcriptions from corresponding model numbers
+            stage1_config = get_model_init_params(1, model_num)
+            stage2_config = get_model_init_params(2, model_num)
+            return [
+                f"Stage 1 Model {model_num} - {stage1_config['provider'].title()} {stage1_config['name']} Transcription",
+                f"Stage 2 Model {model_num} - {stage2_config['provider'].title()} {stage2_config['name']} Transcription"
+            ]
+        elif stage == 4:
+            # Stage 4: Each model needs all Stage 3 reviews
+            return [
+                f"Stage 3 Model 1 - {get_model_init_params(3, 1)['provider'].title()} {get_model_init_params(3, 1)['name']} Review",
+                f"Stage 3 Model 2 - {get_model_init_params(3, 2)['provider'].title()} {get_model_init_params(3, 2)['name']} Review",
+                f"Stage 3 Model 3 - {get_model_init_params(3, 3)['provider'].title()} {get_model_init_params(3, 3)['name']} Review"
+            ]
+        elif stage == 5:
+            # Stage 5: Needs all Stage 4 reviews
+            return [
+                f"Stage 4 Model 1 - {get_model_init_params(4, 1)['provider'].title()} {get_model_init_params(4, 1)['name']} Review",
+                f"Stage 4 Model 2 - {get_model_init_params(4, 2)['provider'].title()} {get_model_init_params(4, 2)['name']} Review",
+                f"Stage 4 Model 3 - {get_model_init_params(4, 3)['provider'].title()} {get_model_init_params(4, 3)['name']} Review"
+            ]
+        elif stage == 6:
+            # Stage 6: Needs Stage 5 final transcription
+            stage5_config = get_model_init_params(5, 1)
+            return [f"Stage 5 Model 1 - {stage5_config['provider'].title()} {stage5_config['name']} Final Transcription"]
+        elif stage == 7:
+            # Stage 7: Needs Stage 6 punctuated transcription
+            stage6_config = get_model_init_params(6, 1)
+            return [f"Stage 6 Model 1 - {stage6_config['provider'].title()} {stage6_config['name']} Punctuated Transcription"]
+        elif stage == 8:
+            # Stage 8: Needs Stage 7 translation
+            stage7_config = get_model_init_params(7, 1)
+            return [f"Stage 7 Model 1 - {stage7_config['provider'].title()} {stage7_config['name']} Translation"]
+        else:
+            return []
+
+    def _verify_stage_data(self, stage: int, model_num: int) -> None:
+        """
+        Verify required data is present in context window for a stage.
+        
+        Args:
+            stage: Stage number
+            model_num: Model number
+            
+        Raises:
+            ValueError: If required data is missing or invalid
+        """
+        # Get required keys for this stage
+        required_keys = self._get_stage_dependencies(stage, model_num)
+        if not required_keys:
+            return
+            
+        # Check for missing keys
+        missing_keys = [key for key in required_keys if key not in self.context_window]
+        if missing_keys:
+            print("\nContext Window State:")
+            self._debug_context("Verification Error")
+            raise ValueError(f"Stage {stage} incomplete. Missing data: {missing_keys}")
+        
+        # Verify content is not empty
+        empty_keys = [key for key in required_keys if isinstance(self.context_window.get(key), str) 
+                     and not self.context_window[key].strip()]
+        if empty_keys:
+            raise ValueError(f"Stage {stage} incomplete. Empty content for: {empty_keys}")
+        
+        print(f"\nStage {stage} verification passed - All required data present and non-empty")
+
+    def _debug_context(self, stage: str):
+        """Debug helper to verify context window state"""
+        print(f"\nContext Window State after {stage}:")
+        for key, value in self.context_window.items():
+            if key == "image":
+                print(f"- {key}: <base64 encoded image>")
+                continue
+            # Print first 100 chars of value if it's a string
+            preview = str(value)[:100] + "..." if len(str(value)) > 100 else str(value)
+            print(f"- {key}: {preview}")
+
+    def process_image(self, image_base64: str, token_tracker: Optional['TokenTracker'] = None) -> Dict[str, Any]:
         """
         Process an image through all stages using the shared context window.
+        
+        Args:
+            image_base64: Base64 encoded image string
+            token_tracker: Optional token tracker for monitoring usage
+            
+        Returns:
+            Dict[str, Any]: Context window containing all stage results
+            
+        Raises:
+            ValueError: If stage validation fails or required data is missing
+            RuntimeError: If model creation or execution fails
+            Exception: For any other processing errors
         """
         try:
             # Use provided token tracker or lazy load default one
             if token_tracker is not None:
                 self.token_tracker = token_tracker
             
+            # Validate image data
+            if not image_base64:
+                raise ValueError("Image data cannot be empty")
+            if not isinstance(image_base64, str):
+                raise ValueError("Image data must be a base64 string")
+            
             # Store image in context window for transcription stages only
-            self.context_window["image"] = image
+            self.context_window["image"] = image_base64
 
             print("\n=== Starting Image Processing Pipeline ===")
             
-            print("\n=== Stage 1: Initial Image Encoding and Transcription ===")
-            self._execute_stage_1(image)
+            # Stage 1: Initial Transcription (3 models in parallel)
+            print("\n=== Stage 1: Initial Transcription ===")
+            self._execute_transcription_stage(1, image_base64)
             self._debug_context("Stage 1")
             
-            print("\n=== Stage 2: Secondary Image Encoding and Transcription ===")
-            self._execute_stage_2()
+            # Stage 2: Secondary Transcription (3 models in parallel)
+            print("\n=== Stage 2: Secondary Transcription ===")
+            self._execute_transcription_stage(2, image_base64)
             self._debug_context("Stage 2")
             
-            print("\n=== Stage 3: Comparative Analysis and Recommendation ===")
-            self._execute_stage_3()
+            # Stage 3: Initial Review (3 models in parallel)
+            print("\n=== Stage 3: Initial Review ===")
+            self._execute_review_stage(3)
             self._debug_context("Stage 3")
             
+            # Stage 4: Comprehensive Review (3 models in parallel)
             print("\n=== Stage 4: Comprehensive Review ===")
-            self._execute_stage_4()
+            self._execute_review_stage(4)
             self._debug_context("Stage 4")
             
+            # Final Stages (5-8)
             print("\n=== Starting Final Stages ===")
             self._execute_final_stages()
             self._debug_context("Final Stages")
-            
-            # Final verification of all stages
-            self._verify_all_stages()
             
             print("\n=== Image Processing Complete ===")
             return self.context_window
@@ -159,273 +199,182 @@ class ModelManager:
             print("\nContext Window State at Error:")
             self._debug_context("Error State")
             print("\nFull error details:")
-            # Re-raise the original exception to preserve the stack trace
             raise
+        finally:
+            # Cleanup
+            if "image" in self.context_window:
+                del self.context_window["image"]
+            self._active_models.clear()
 
-    def _verify_all_stages(self):
-        """Verify all required data from all stages is present"""
-        stages = ["Stage 1", "Stage 2", "Stage 3", "Stage 4", "Final Stages"]
-        for stage in stages:
-            required_keys = self._get_required_keys(stage)
-            if required_keys:  # Only verify if there are required keys for the stage
-                self._verify_stage_data(stage, required_keys)
-
-    def _get_model_config(self, model_key: str):
-        """Lazy load model config only when needed"""
-        from config.config import get_model_init_params
-        return get_model_init_params(int(model_key[-1]))
-
-    def _get_configured_models(self) -> List[tuple]:
-        """Get list of configured models."""
-        configured_models = []
-        for model, model_key in self.model_sequence:
-            config = self._get_model_config(model_key)
-            if config and config.get('provider') and config.get('name'):
-                configured_models.append((model, model_key))
-        return configured_models
-
-    def _verify_api_keys(self):
-        """Verify required API keys are present for configured models."""
-        required_keys = set()
-        
-        # Check which providers we need based on configured models
-        for model_key in ["LLM1", "LLM2", "LLM3", "LLM4"]:
-            config = self._get_model_config(model_key)
-            if config and config.get('provider') and config.get('name'):  # Check if config exists and model is configured
-                provider = config['provider']
-                # Get model-specific API key var
-                from config.config import get_env_var_name
-                api_key_var = get_env_var_name(provider, int(model_key[-1]))
-                required_keys.add(api_key_var)
-        
-        # If no models configured, raise error
-        if not required_keys:
-            print("\nConfiguration Error:")
-            print("1. Check .env.example for model configuration")
-            print("2. Configure at least one model following the template")
-            print("\nSee .env.example for complete setup instructions.")
-            raise Exception("No models configured. Please check your environment configuration.")
-        
-        # Check if keys are present
-        missing_keys = []
-        for key in required_keys:
-            if not os.getenv(key):
-                missing_keys.append(key)
-        
-        if missing_keys:
-            print("\nAuthentication Error:")
-            print("1. Check .env.example for required API keys")
-            print("2. Verify your API keys are correctly configured")
-            print("\nError details: Authentication failed. Please check your configuration.")
-            raise Exception("Authentication failed. Please verify your API configuration.")
-
-    def _execute_stage_1(self, image: 'PIL.Image.Image'):
+    def _execute_transcription_stage(self, stage: int, image_base64: str):
         """
-        Stage 1: Have each model generate transcription
-        """
-        # Verify API keys before starting
-        self._verify_api_keys()
+        Execute a transcription stage with multiple models in parallel.
         
-        # Have each configured model generate transcription
-        configured_models = self._get_configured_models()
-        for model, model_key in configured_models:
-            config = self._get_model_config(model_key)
-            model_info = f"{model_key} - {config['provider'].title()} {config['name']}"
-            print(f"\nProcessing Stage 1 with {model_info}...")
-            print(f"- Generating initial transcription...")
+        Args:
+            stage: Stage number (must be 1 or 2)
+            image_base64: Base64 encoded image string
             
-            # Generate transcription using the shared encoded image
-            transcription = model.generate_transcription(image, self.token_tracker)
-            
-            # Store transcription in context window with enhanced model info
-            key = f"{model_info}'s Stage 1 transcription"
-            self.context_window[key] = transcription
-            print(f"- Transcription stored in context window under key: {key}")
-        
-        # Verify Stage 1 data for configured models
-        required_keys = self._get_required_keys("Stage 1")
-        self._verify_stage_data("Stage 1", required_keys)
-
-    def _get_required_keys(self, stage: str) -> List[str]:
-        """Get required keys based on configured models."""
-        configured_models = self._get_configured_models()
-        model_nums = [int(model_key[-1]) for _, model_key in configured_models]
-        
-        if stage == "Stage 1":
-            return [f"LLM{i}'s Stage 1 transcription" for i in model_nums]
-        elif stage == "Stage 2":
-            return [f"LLM{i}'s Stage 2 transcription" for i in model_nums]
-        elif stage == "Stage 3":
-            return [f"LLM{i}'s Stage 3 Analysis and Recommendation" for i in model_nums]
-        elif stage == "Stage 4":
-            return [f"LLM{i}'s Stage 4 Comprehensive Review" for i in model_nums]
-        elif stage == "Final Stages":
-            return [
-                "Stage 5 Final Transcription",
-                "Stage 6 Punctuated Final Transcription",
-                "Stage 7 English Translation",
-                "Stage 8 Historical Commentary"
-            ]
-        return []
-
-    def _execute_stage_2(self):
+        Raises:
+            ValueError: If stage is not 1 or 2
+            RuntimeError: If model creation or execution fails
         """
-        Stage 2: Second pass transcriptions
-        """
-        configured_models = self._get_configured_models()
-        for model, model_key in configured_models:
-            config = self._get_model_config(model_key)
-            model_info = f"{model_key} - {config['provider'].title()} {config['name']}"
-            print(f"\nProcessing Stage 2 with {model_info}...")
-            print(f"- Generating secondary transcription...")
+        if stage not in [1, 2]:
+            raise ValueError(f"Invalid transcription stage: {stage}")
             
-            # Generate transcription using the shared encoded image
-            transcription = model.generate_transcription(
-                self.context_window["image"],
-                self.token_tracker
+        success_count = 0
+        errors = []
+        for model_num in range(1, 4):  # 3 models per stage
+            model_info = None  # Initialize outside try block
+            try:
+                model = ModelFactory.create_model(stage, model_num)
+                self._active_models.append(model)
+                model_info = self._get_model_info(stage, model_num)
+                print(f"\nProcessing Stage {stage} Transcription with {model_info}...")
+                
+                transcription = model.generate_transcription(image_base64, self.token_tracker)
+                if not transcription:
+                    raise ValueError("Empty transcription result")
+                    
+                key = f"{model_info} Transcription"
+                self.context_window[key] = transcription
+                print("- Transcription completed and stored")
+                success_count += 1
+                
+            except Exception as e:
+                error_msg = f"Error with {model_info or f'Stage {stage} Model {model_num}'}: {str(e)}"
+                print(error_msg)
+                errors.append(error_msg)
+                continue
+                
+        if success_count == 0:
+            raise RuntimeError(
+                f"All models failed in transcription stage {stage}. Errors:\n" +
+                "\n".join(errors)
             )
-            
-            # Store transcription in context window with enhanced model info
-            key = f"{model_info}'s Stage 2 transcription"
-            self.context_window[key] = transcription
-            print(f"- Transcription stored in context window under key: {key}")
-        
-        # Verify Stage 2 data for configured models
-        required_keys = self._get_required_keys("Stage 2")
-        self._verify_stage_data("Stage 2", required_keys)
 
-    def _execute_stage_3(self):
+    def _execute_review_stage(self, stage: int):
         """
-        Stage 3: Each model analyzes all previous data and makes recommendations
+        Execute a review stage with multiple models in parallel.
+        
+        Args:
+            stage: Stage number (must be 3 or 4)
+            
+        Raises:
+            ValueError: If stage is not 3 or 4 or if required data is missing
+            RuntimeError: If model creation or execution fails
         """
-        # Get configured models
-        configured_models = self._get_configured_models()
-        
-        # Verify required data from previous stages
-        required_keys = []
-        for _, model_key in configured_models:
-            required_keys.extend([
-                f"{model_key}'s Stage 1 transcription",
-                f"{model_key}'s Stage 2 transcription"
-            ])
-        self._verify_stage_data("Previous Stages", required_keys)
-
-        for model, model_key in configured_models:
-            config = self._get_model_config(model_key)
-            model_info = f"{model_key} - {config['provider'].title()} {config['name']}"
-            print(f"\nProcessing Stage 3 with {model_info}...")
-            print(f"- Analyzing previous transcriptions...")
+        if stage not in [3, 4]:
+            raise ValueError(f"Invalid review stage: {stage}")
             
-            # Create context with only this model's transcriptions
-            model_context = {
-                f"{model_info}'s Stage 1 transcription": self.context_window[f"{model_info}'s Stage 1 transcription"],
-                f"{model_info}'s Stage 2 transcription": self.context_window[f"{model_info}'s Stage 2 transcription"]
-            }
-            
-            # Model analyzes only its own Stage 1 vs Stage 2 transcriptions
-            analysis = model.analyze_context(model_context, self.token_tracker)
-            
-            # Store analysis in context window with enhanced model info
-            key = f"{model_info}'s Stage 3 Analysis and Recommendation"
-            self.context_window[key] = analysis
-            print(f"- Analysis stored in context window under key: {key}")
-        
-        # Verify Stage 3 data for configured models
-        required_keys = self._get_required_keys("Stage 3")
-        self._verify_stage_data("Stage 3", required_keys)
-
-    def _execute_stage_4(self):
-        """
-        Stage 4: Each model performs a comprehensive review of all previous data
-        """
-        # Get configured models
-        configured_models = self._get_configured_models()
-        
-        # Verify required data from previous stages
-        required_keys = []
-        for _, model_key in configured_models:
-            required_keys.extend([
-                f"{model_key}'s Stage 1 transcription",
-                f"{model_key}'s Stage 2 transcription",
-                f"{model_key}'s Stage 3 Analysis and Recommendation"
-            ])
-        self._verify_stage_data("Previous Stages", required_keys)
-
-        for model, model_key in configured_models:
-            config = self._get_model_config(model_key)
-            model_info = f"{model_key} - {config['provider'].title()} {config['name']}"
-            print(f"\nProcessing Stage 4 with {model_info}...")
-            print(f"- Performing comprehensive review...")
-            
-            # Model reviews all previous data and generates final recommendations
-            review = model.comprehensive_review(self.context_window, self.token_tracker)
-            
-            # Store review in context window with enhanced model info
-            key = f"{model_info}'s Stage 4 Comprehensive Review"
-            self.context_window[key] = review
-            print(f"- Review stored in context window under key: {key}")
-        
-        # Verify Stage 4 data for configured models
-        required_keys = self._get_required_keys("Stage 4")
-        self._verify_stage_data("Stage 4", required_keys)
+        success_count = 0
+        errors = []
+        for model_num in range(1, 4):  # 3 models per stage
+            model_info = None  # Initialize outside try block
+            try:
+                # Verify required data is present
+                self._verify_stage_data(stage, model_num)
+                
+                model = ModelFactory.create_model(stage, model_num)
+                self._active_models.append(model)
+                model_info = self._get_model_info(stage, model_num)
+                print(f"\nProcessing Stage {stage} Review with {model_info}...")
+                
+                if stage == 3:
+                    review = model.analyze_context(self.context_window, self.token_tracker)
+                    print("- Analysis completed")
+                else:  # stage 4
+                    review = model.comprehensive_review(self.context_window, self.token_tracker)
+                    print("- Comprehensive review completed")
+                
+                if not review:
+                    raise ValueError("Empty review result")
+                    
+                key = f"{model_info} Review"
+                self.context_window[key] = review
+                print("- Results stored in context window")
+                success_count += 1
+                
+            except Exception as e:
+                error_msg = f"Error with {model_info or f'Stage {stage} Model {model_num}'}: {str(e)}"
+                print(error_msg)
+                errors.append(error_msg)
+                continue
+                
+        if success_count == 0:
+            raise RuntimeError(
+                f"All models failed in review stage {stage}. Errors:\n" +
+                "\n".join(errors)
+            )
 
     def _execute_final_stages(self):
         """
-        Stages 5-8: Final processing by LLM4
-        """
-        # Verify required data from previous stages for configured models
-        required_keys = self._get_required_keys("Stage 4")
-        self._verify_stage_data("Previous Stages", required_keys)
+        Execute final stages (5-8) with the selected model.
         
+        Raises:
+            ValueError: If required data is missing for any stage
+            RuntimeError: If model creation or execution fails
+        """
         # Remove image from context window since it's not needed for final stages
         if "image" in self.context_window:
             del self.context_window["image"]
         
-        # Stage 5: Final Transcription
-        print("\n=== Stage 5: Generating Final Authoritative Transcription ===")
-        final_transcription = self.llm4.generate_final_transcription(
-            self.context_window,
-            self.token_tracker
-        )
-        self.context_window["Stage 5 Final Transcription"] = final_transcription
-        print("- Final transcription stored in context window")
-        self._verify_stage_data("Stage 5", ["Stage 5 Final Transcription"])
-        
-        # Stage 6: Punctuation
-        print("\n=== Stage 6: Adding Chinese Punctuation ===")
-        punctuated = self.llm4.add_punctuation(
-            final_transcription,
-            self.token_tracker
-        )
-        self.context_window["Stage 6 Punctuated Final Transcription"] = punctuated
-        print("- Punctuated transcription stored in context window")
-        self._verify_stage_data("Stage 6", ["Stage 6 Punctuated Final Transcription"])
-        
-        # Stage 7: Translation
-        print("\n=== Stage 7: Translating to English ===")
-        translation = self.llm4.translate_to_english(
-            punctuated,
-            self.token_tracker
-        )
-        self.context_window["Stage 7 English Translation"] = translation
-        print("- Translation stored in context window")
-        self._verify_stage_data("Stage 7", ["Stage 7 English Translation"])
-        
-        # Stage 8: Commentary
-        print("\n=== Stage 8: Generating Historical Commentary ===")
-        commentary = self.llm4.generate_commentary(
-            translation,
-            self.token_tracker
-        )
-        self.context_window["Stage 8 Historical Commentary"] = commentary
-        print("- Commentary stored in context window")
-        self._verify_stage_data("Stage 8", ["Stage 8 Historical Commentary"])
-        
-        # Verify all final stages
-        required_keys = [
-            "Stage 5 Final Transcription",
-            "Stage 6 Punctuated Final Transcription",
-            "Stage 7 English Translation",
-            "Stage 8 Historical Commentary"
-        ]
-        self._verify_stage_data("Final Stages", required_keys)
+        try:
+            # Stage 5: Final Transcription
+            print("\n=== Stage 5: Generating Final Authoritative Transcription ===")
+            self._verify_stage_data(5, 1)
+            model = ModelFactory.create_model(5, 1)  # Use first model for final stages
+            self._active_models.append(model)
+            model_info = self._get_model_info(5, 1)
+            print(f"Processing with {model_info}...")
+            final_transcription = model.generate_final_transcription(self.context_window, self.token_tracker)
+            if not final_transcription:
+                raise ValueError("Empty final transcription result")
+            key = f"{model_info} Final Transcription"
+            self.context_window[key] = final_transcription
+            print("- Final transcription completed and stored")
+            
+            # Stage 6: Punctuation
+            print("\n=== Stage 6: Adding Chinese Punctuation ===")
+            self._verify_stage_data(6, 1)
+            model = ModelFactory.create_model(6, 1)
+            self._active_models.append(model)
+            model_info = self._get_model_info(6, 1)
+            print(f"Processing with {model_info}...")
+            punctuated = model.add_punctuation(final_transcription, self.token_tracker)
+            if not punctuated:
+                raise ValueError("Empty punctuation result")
+            key = f"{model_info} Punctuated Transcription"
+            self.context_window[key] = punctuated
+            print("- Punctuation completed and stored")
+            
+            # Stage 7: Translation
+            print("\n=== Stage 7: Translating to English ===")
+            self._verify_stage_data(7, 1)
+            model = ModelFactory.create_model(7, 1)
+            self._active_models.append(model)
+            model_info = self._get_model_info(7, 1)
+            print(f"Processing with {model_info}...")
+            translation = model.translate_to_english(punctuated, self.token_tracker)
+            if not translation:
+                raise ValueError("Empty translation result")
+            key = f"{model_info} Translation"
+            self.context_window[key] = translation
+            print("- Translation completed and stored")
+            
+            # Stage 8: Commentary
+            print("\n=== Stage 8: Generating Historical Commentary ===")
+            self._verify_stage_data(8, 1)
+            model = ModelFactory.create_model(8, 1)
+            self._active_models.append(model)
+            model_info = self._get_model_info(8, 1)
+            print(f"Processing with {model_info}...")
+            commentary = model.generate_commentary(translation, self.token_tracker)
+            if not commentary:
+                raise ValueError("Empty commentary result")
+            key = f"{model_info} Commentary"
+            self.context_window[key] = commentary
+            print("- Commentary completed and stored")
+            
+        except Exception as e:
+            print(f"Error in final stages: {str(e)}")
+            raise RuntimeError("Failed to complete final stages") from e

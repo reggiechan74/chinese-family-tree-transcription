@@ -1,238 +1,96 @@
-"""Image utility functions for handling and preprocessing images."""
-
-import PIL.Image
-import io
-import base64
+"""
+Image utility functions for handling and preprocessing images.
+"""
 import os
-from typing import Union, Tuple, Dict, Any
+import base64
+from typing import Dict, Any, Tuple
 
-class ImageUtils:
-    """Utility class for image operations."""
-    
-    @staticmethod
-    def validate_format(image_path: str) -> bool:
-        """Validate image file format."""
-        valid_extensions = {'.jpg', '.jpeg', '.png', '.tiff', '.bmp'}
-        _, ext = os.path.splitext(image_path.lower())
-        return ext in valid_extensions
-
-def encode_image_for_vision_models(image: PIL.Image.Image) -> Dict[str, Any]:
+def encode_image_for_vision_models(image_path: str) -> str:
     """
-    Encode an image for use with vision models.
-    Handles different model requirements (base64, bytes, etc.)
-    
-    Args:
-        image: PIL Image object to encode
-        
-    Returns:
-        Dict containing encoded image in various formats
-        
-    Raises:
-        Exception: If encoding fails
-    """
-    try:
-        return {
-            'base64': convert_to_base64(image),
-            'bytes': convert_to_bytes(image),
-            'pil': image
-        }
-    except Exception as e:
-        raise Exception(f"Error encoding image for vision models: {str(e)}")
-
-def save_image(image: PIL.Image.Image, output_path: str):
-    """
-    Save an image to a file.
-    
-    Args:
-        image: PIL Image object to save
-        output_path: Path where to save the image
-        
-    Raises:
-        Exception: If saving fails
-    """
-    try:
-        # Create output directory if it doesn't exist
-        os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        image.save(output_path)
-    except Exception as e:
-        raise Exception(f"Error saving image: {str(e)}")
-
-def get_image_info(image: PIL.Image.Image) -> Dict[str, Any]:
-    """
-    Get information about an image.
-    
-    Args:
-        image: PIL Image object to analyze
-        
-    Returns:
-        Dict containing image information
-        
-    Raises:
-        Exception: If analysis fails
-    """
-    try:
-        return {
-            'size': image.size,
-            'mode': image.mode,
-            'format': image.format,
-            'bytes': len(convert_to_bytes(image))
-        }
-    except Exception as e:
-        raise Exception(f"Error getting image info: {str(e)}")
-
-def load_image(image_path: str) -> PIL.Image.Image:
-    """
-    Load an image from a file path.
+    Encode an image file to base64 string for vision models.
     
     Args:
         image_path: Path to the image file
         
     Returns:
-        PIL.Image.Image: Loaded image object
-        
-    Raises:
-        Exception: If image loading fails
+        str: Base64 encoded image string
     """
-    try:
-        return PIL.Image.open(image_path)
-    except Exception as e:
-        raise Exception(f"Error loading image: {str(e)}")
+    with open(image_path, "rb") as image_file:
+        return base64.b64encode(image_file.read()).decode('utf-8')
 
-def preprocess_image(image: PIL.Image.Image) -> PIL.Image.Image:
+def get_image_info(image_path: str) -> Dict[str, Any]:
     """
-    Preprocess an image for optimal OCR performance.
+    Get basic information about an image file.
     
     Args:
-        image: PIL Image object to preprocess
+        image_path: Path to the image file
         
     Returns:
-        PIL.Image.Image: Preprocessed image
-        
-    Raises:
-        Exception: If preprocessing fails
+        Dict containing:
+            - size_bytes: Size of image in bytes
+            - size_mb: Size of image in MB
+            - format: File extension
     """
-    try:
-        # Convert to RGB if needed
-        if image.mode != 'RGB':
-            image = image.convert('RGB')
-        
-        # Ensure size meets OpenAI's requirements (max 20MB, reasonable dimensions)
-        max_dimension = 2048
-        width, height = image.size
-        if width > max_dimension or height > max_dimension:
-            # Calculate scale to fit within max dimension while maintaining aspect ratio
-            scale = min(max_dimension/width, max_dimension/height)
-            new_width = int(width * scale)
-            new_height = int(height * scale)
-            # Use LANCZOS resampling for high quality
-            image = image.resize((new_width, new_height), PIL.Image.Resampling.LANCZOS)
-            # Convert to RGB and optimize quality
-            image = image.convert('RGB')
-            # Compress to ensure size is under 20MB
-            img_byte_arr = io.BytesIO()
-            image.save(img_byte_arr, format='JPEG', quality=85, optimize=True)
-            if len(img_byte_arr.getvalue()) > 20 * 1024 * 1024:  # 20MB
-                # If still too large, reduce quality until under limit
-                for quality in [75, 65, 55, 45]:
-                    img_byte_arr = io.BytesIO()
-                    image.save(img_byte_arr, format='JPEG', quality=quality, optimize=True)
-                    if len(img_byte_arr.getvalue()) <= 20 * 1024 * 1024:
-                        break
-            # Load the processed image back
-            img_byte_arr.seek(0)
-            image = PIL.Image.open(img_byte_arr)
-        
-        return image
-    except Exception as e:
-        raise Exception(f"Error preprocessing image: {str(e)}")
+    size_bytes = os.path.getsize(image_path)
+    return {
+        'size_bytes': size_bytes,
+        'size_mb': size_bytes / (1024 * 1024),
+        'format': os.path.splitext(image_path)[1].lower()[1:]  # Remove the dot
+    }
 
-def validate_image(image: PIL.Image.Image) -> Tuple[bool, str]:
+def validate_image(image_path: str) -> Tuple[bool, str]:
     """
-    Validate an image for processing.
+    Validate an image file.
     
     Args:
-        image: PIL Image object to validate
+        image_path: Path to the image file
         
     Returns:
-        Tuple[bool, str]: (is_valid, message)
-        
-    Raises:
-        Exception: If validation check fails
+        Tuple of (is_valid: bool, message: str)
     """
     try:
-        # Check image mode
-        if image.mode not in ['RGB', 'L']:
-            return False, f"Unsupported image mode: {image.mode}"
-        
-        # Check dimensions
-        width, height = image.size
-        if width < 100 or height < 100:
-            return False, f"Image too small: {width}x{height}"
-        if width > 10000 or height > 10000:
-            return False, f"Image too large: {width}x{height}"
+        if not os.path.exists(image_path):
+            return False, "Image file not found"
+            
+        info = get_image_info(image_path)
         
         # Check file size
-        image_bytes = convert_to_bytes(image)
-        size_mb = len(image_bytes) / (1024 * 1024)
-        if size_mb > 20:
-            return False, f"Image file too large: {size_mb:.1f}MB"
-        
+        if info['size_mb'] > 20:
+            return False, f"Image file too large: {info['size_mb']:.1f}MB"
+            
+        # Check file format
+        valid_formats = {'jpg', 'jpeg', 'png', 'gif', 'webp'}
+        if info['format'].lower() not in valid_formats:
+            return False, f"Unsupported image format: {info['format']}"
+            
+        # Try to read and encode the file
+        try:
+            encode_image_for_vision_models(image_path)
+        except Exception as e:
+            return False, f"Failed to read image file: {str(e)}"
+            
         return True, "Image validation passed"
+        
     except Exception as e:
-        raise Exception(f"Error validating image: {str(e)}")
+        return False, f"Image validation failed: {str(e)}"
 
-def convert_to_bytes(image: PIL.Image.Image) -> bytes:
+def load_image(image_path: str) -> str:
     """
-    Convert a PIL Image to bytes.
+    Load and validate an image file, returning its base64 encoding.
     
     Args:
-        image: PIL Image object to convert
-        
-    Returns:
-        bytes: Image data as bytes
-        
-    Raises:
-        Exception: If conversion fails
-    """
-    try:
-        img_byte_arr = io.BytesIO()
-        # Convert to RGB if needed
-        if image.mode != 'RGB':
-            image = image.convert('RGB')
-        # Save as JPEG with optimized quality
-        image.save(img_byte_arr, format='JPEG', quality=85, optimize=True)
-        # Check size and reduce quality if needed
-        if len(img_byte_arr.getvalue()) > 20 * 1024 * 1024:  # 20MB
-            for quality in [75, 65, 55, 45]:
-                img_byte_arr = io.BytesIO()
-                image.save(img_byte_arr, format='JPEG', quality=quality, optimize=True)
-                if len(img_byte_arr.getvalue()) <= 20 * 1024 * 1024:
-                    break
-        img_byte_arr.seek(0)
-        return img_byte_arr.getvalue()
-    except Exception as e:
-        raise Exception(f"Error converting image to bytes: {str(e)}")
-
-def convert_to_base64(image: PIL.Image.Image) -> str:
-    """
-    Convert a PIL Image to base64 string.
-    
-    Args:
-        image: PIL Image object to convert
+        image_path: Path to the image file
         
     Returns:
         str: Base64 encoded image string
         
     Raises:
-        Exception: If conversion fails
+        ValueError: If image validation fails
     """
-    try:
-        # Convert to bytes first
-        image_bytes = convert_to_bytes(image)
+    # Validate image
+    is_valid, message = validate_image(image_path)
+    if not is_valid:
+        raise ValueError(f"Invalid image: {message}")
         
-        # Convert bytes to base64
-        base64_str = base64.b64encode(image_bytes).decode('utf-8')
-        
-        return base64_str
-    except Exception as e:
-        raise Exception(f"Error converting image to base64: {str(e)}")
+    # Encode image
+    return encode_image_for_vision_models(image_path)

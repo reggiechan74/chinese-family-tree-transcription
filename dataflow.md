@@ -1,59 +1,136 @@
 # Chinese Family Tree Processing System Data Flow
 
-## Provider-Specific Data Handling
+## Stage-by-Stage Data Flow
 
-1. **Direct API Providers**
-   - OpenAI
-     * Standard chat completion format
-     * Base64 image embedding for vision tasks
-   - Anthropic
-     * Messages API format
-     * Model-specific token limits (Opus: 4096, Sonnet: 8192)
-     * Base64 image handling with source type
-   - Google
-     * GenerativeModel format
-     * Direct image data handling
-   - Groq
-     * Standard chat completion format
-     * Text-only processing
+### Stage 1: Initial Transcription
+- **Input**
+  * Raw image file
+  * Base64 encoded image data
+  * Vision model prompts
+- **Processing**
+  * Three parallel vision models process image
+  * Each model generates independent transcription
+  * Token usage tracked per model
+- **Output**
+  * Three independent Chinese text transcriptions
+  * Token usage metrics for each model
+  * Processing time and status
 
-2. **API Aggregators**
-   - OpenRouter
-     * OpenAI-compatible API format
-     * Custom HTTP headers for routing
-     * Provider-specific model handling
-       - Meta Llama vision models
-       - Deepseek language models
-       - Grok vision models
+### Stage 2: Secondary Transcription
+- **Input**
+  * Raw image file (same as Stage 1)
+  * Base64 encoded image data
+  * Stage 1 transcriptions (for context)
+  * Vision model prompts
+- **Processing**
+  * Three parallel vision models process image
+  * Each model generates new transcription
+  * Compare with Stage 1 results
+- **Output**
+  * Three new Chinese text transcriptions
+  * Comparison notes with Stage 1
+  * Token usage metrics
 
-## Data Flow by Stage Type
+### Stage 3: Analysis
+- **Input**
+  * Stage 1 transcriptions
+  * Stage 2 transcriptions
+  * Analysis prompts
+- **Processing**
+  * Each model analyzes its own Stage 1 & 2 results
+  * Identify discrepancies and patterns
+  * Generate recommendations
+- **Output**
+  * Analysis reports
+  * Discrepancy lists
+  * Recommended corrections
+  * Token usage metrics
 
-1. **Vision Stages (1-2)**
-   - Input: Base64 encoded image
-   - Provider-specific image handling
-   - Output: Transcribed text
-   - Token tracking for both text and image
+### Stage 4: Review
+- **Input**
+  * All Stage 3 analyses
+  * Original transcriptions
+  * Review prompts
+- **Processing**
+  * Cross-model analysis
+  * Consensus building
+  * Final recommendations
+- **Output**
+  * Comprehensive review reports
+  * Consensus recommendations
+  * Final transcription suggestions
+  * Token usage metrics
 
-2. **Language Stages (3-8)**
-   - Input: Text from previous stage
-   - Standard text processing
-   - Output: Processed text
-   - Token tracking for text only
+### Stage 5: Final Transcription
+- **Input**
+  * Stage 4 review reports
+  * Consensus recommendations
+  * Transcription prompts
+- **Processing**
+  * Synthesize all previous analyses
+  * Apply consensus corrections
+  * Generate authoritative version
+- **Output**
+  * Final Chinese transcription
+  * Confidence metrics
+  * Token usage metrics
 
-## Token Usage Tracking
+### Stage 6: Punctuation
+- **Input**
+  * Final transcription from Stage 5
+  * Punctuation prompts
+- **Processing**
+  * Analyze text structure
+  * Add appropriate punctuation
+  * Enhance readability
+- **Output**
+  * Punctuated Chinese text
+  * Formatting notes
+  * Token usage metrics
 
-1. **Provider-Specific Tracking**
-   - OpenAI: Direct token counts from API
-   - Anthropic: Direct token counts from API
-   - Google: Estimated token counts
-   - Groq: Estimated token counts
-   - OpenRouter: Direct token counts from API
+### Stage 7: Translation
+- **Input**
+  * Punctuated Chinese text
+  * Translation prompts
+- **Processing**
+  * Translate to English
+  * Add Pinyin annotations
+  * Preserve formatting
+- **Output**
+  * English translation
+  * Pinyin annotations
+  * Translation notes
+  * Token usage metrics
 
-2. **Cost Calculation**
-   - Input token rates
-   - Output token rates
-   - Image token estimation
-   - Provider-specific pricing
+### Stage 8: Commentary
+- **Input**
+  * Chinese text
+  * English translation
+  * Commentary prompts
+- **Processing**
+  * Historical analysis
+  * Cultural context
+  * Genealogical insights
+- **Output**
+  * Historical commentary
+  * Cultural notes
+  * Genealogical context
+  * Token usage metrics
+
+## Final Output Aggregation
+- **Input**
+  * All stage outputs
+  * Token usage data
+  * Processing metrics
+- **Processing**
+  * Compile all results
+  * Generate summaries
+  * Calculate metrics
+- **Output**
+  * Complete transcription package
+  * Summary report
+  * Token usage report
+  * Performance metrics
 
 ## Output File Structure
 
@@ -127,5 +204,3 @@ Total Processing Time: Xm XX.XXs
 - Average Cost per Stage: $X.XX
 - Cost per 1K Tokens: $X.XX
 ```
-
-[Rest of the content remains exactly as before]

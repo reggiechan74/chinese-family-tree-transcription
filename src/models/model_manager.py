@@ -11,6 +11,7 @@ if current_dir not in sys.path:
 from models.model_interfaces import TranscriptionModel, ReviewModel, FinalStageModel
 from models.model_factory import ModelFactory
 from utils.token_counter import count_tokens, TokenTracker
+from config.config import get_model_init_params
 
 class ModelManager:
     """
@@ -191,9 +192,11 @@ class ModelManager:
                 # Create context with corresponding Stage 1 and 2 results
                 context = {}
                 for stage in [1, 2]:
-                    key = f"Stage {stage} Model {i} - {model.provider.title()} {model.model_name} Transcription"
-                    if key in (stage1_results if stage == 1 else stage2_results):
-                        context[key] = stage1_results[key] if stage == 1 else stage2_results[key]
+                    stage_config = get_model_init_params(stage, i)
+                    key = f"Stage {stage} Model {i} - {stage_config['provider'].title()} {stage_config['name']} Transcription"
+                    results_dict = stage1_results if stage == 1 else stage2_results
+                    if key in results_dict:
+                        context[key] = results_dict[key]
                 
                 result = model.analyze_context(context, self.token_tracker)
                 key = f"Stage {stage_num} Model {i} - {model.provider.title()} {model.model_name} Review"
@@ -220,7 +223,15 @@ class ModelManager:
         # Run comprehensive reviews in parallel
         for i, model in enumerate(models, 1):
             try:
-                result = model.comprehensive_review(stage3_results, self.token_tracker)
+                # Get Stage 3 reviews using actual Stage 3 model configs
+                stage3_reviews = {}
+                for model_num in range(1, 4):
+                    stage3_config = get_model_init_params(3, model_num)
+                    key = f"Stage 3 Model {model_num} - {stage3_config['provider'].title()} {stage3_config['name']} Review"
+                    if key in stage3_results:
+                        stage3_reviews[key] = stage3_results[key]
+                
+                result = model.comprehensive_review(stage3_reviews, self.token_tracker)
                 key = f"Stage {stage_num} Model {i} - {model.provider.title()} {model.model_name} Review"
                 results[key] = result
             except Exception as e:
@@ -238,7 +249,15 @@ class ModelManager:
         model = ModelFactory.create_model(stage_num, 1)
         
         try:
-            result = model.generate_final_transcription(stage4_results, self.token_tracker)
+            # Get Stage 4 reviews using actual Stage 4 model configs
+            stage4_reviews = {}
+            for model_num in range(1, 4):
+                stage4_config = get_model_init_params(4, model_num)
+                key = f"Stage 4 Model {model_num} - {stage4_config['provider'].title()} {stage4_config['name']} Review"
+                if key in stage4_results:
+                    stage4_reviews[key] = stage4_results[key]
+
+            result = model.generate_final_transcription(stage4_reviews, self.token_tracker)
             key = f"Stage {stage_num} Model 1 - {model.provider.title()} {model.model_name} Final Transcription"
             results = {key: result}
         except Exception as e:
@@ -256,7 +275,15 @@ class ModelManager:
         model = ModelFactory.create_model(stage_num, 1)
         
         try:
-            result = model.add_punctuation(final_transcription, self.token_tracker)
+            # Get Stage 5 final transcription using actual Stage 5 model config
+            stage5_config = get_model_init_params(5, 1)
+            stage5_key = f"Stage 5 Model 1 - {stage5_config['provider'].title()} {stage5_config['name']} Final Transcription"
+            if stage5_key in final_transcription:
+                final_text = final_transcription[stage5_key]
+            else:
+                final_text = final_transcription  # Fallback if string was passed directly
+
+            result = model.add_punctuation(final_text, self.token_tracker)
             key = f"Stage {stage_num} Model 1 - {model.provider.title()} {model.model_name} Punctuated Transcription"
             results = {key: result}
         except Exception as e:
@@ -275,7 +302,15 @@ class ModelManager:
         model = ModelFactory.create_model(stage_num, 1)
         
         try:
-            result = model.translate_to_english(punctuated_text, self.token_tracker)
+            # Get Stage 6 punctuated text using actual Stage 6 model config
+            stage6_config = get_model_init_params(6, 1)
+            stage6_key = f"Stage 6 Model 1 - {stage6_config['provider'].title()} {stage6_config['name']} Punctuated Transcription"
+            if stage6_key in punctuated_text:
+                text_to_translate = punctuated_text[stage6_key]
+            else:
+                text_to_translate = punctuated_text  # Fallback if string was passed directly
+
+            result = model.translate_to_english(text_to_translate, self.token_tracker)
             key = f"Stage {stage_num} Model 1 - {model.provider.title()} {model.model_name} Translation"
             results = {key: result}
         except Exception as e:
@@ -529,7 +564,16 @@ class ModelManager:
         model = ModelFactory.create_model(stage_num, 1)
         
         try:
-            result = model.generate_commentary(chinese_text, english_text, self.token_tracker)
+            # Get Stage 6 and 7 texts using actual model configs
+            stage6_config = get_model_init_params(6, 1)
+            stage7_config = get_model_init_params(7, 1)
+            stage6_key = f"Stage 6 Model 1 - {stage6_config['provider'].title()} {stage6_config['name']} Punctuated Transcription"
+            stage7_key = f"Stage 7 Model 1 - {stage7_config['provider'].title()} {stage7_config['name']} Translation"
+
+            chinese = chinese_text[stage6_key] if stage6_key in chinese_text else chinese_text
+            english = english_text[stage7_key] if stage7_key in english_text else english_text
+
+            result = model.generate_commentary(chinese, english, self.token_tracker)
             key = f"Stage {stage_num} Model 1 - {model.provider.title()} {model.model_name} Commentary"
             results = {key: result}
         except Exception as e:

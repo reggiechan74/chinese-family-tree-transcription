@@ -35,6 +35,9 @@ class StageModel(FinalStageModel):
         'anthropic': 'cl100k_base',
         'openrouter': 'cl100k_base'
     }
+
+    # Models that don't support system messages
+    NO_SYSTEM_MESSAGE_MODELS = ['o1-mini', 'o3-mini']
     
     def __init__(self, provider: str, model_name: str, stage: int, model_num: int):
         """Initialize model with provider and model name."""
@@ -141,25 +144,26 @@ class StageModel(FinalStageModel):
                 }
                 
             elif self.provider == 'openai':
+                messages = []
+                # Only add system message for models that support it
+                if self.model_name not in self.NO_SYSTEM_MESSAGE_MODELS:
+                    messages.append({"role": "system", "content": "You are a helpful assistant."})
+                
                 if image:
-                    response = self._client.chat.completions.create(
-                        model=self.model_name,
-                        messages=[
-                            {"role": "system", "content": "You are a helpful assistant."},
-                            {"role": "user", "content": [
-                                {"type": "text", "text": prompt},
-                                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image}"}}
-                            ]}
+                    messages.append({
+                        "role": "user",
+                        "content": [
+                            {"type": "text", "text": prompt},
+                            {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image}"}}
                         ]
-                    )
+                    })
                 else:
-                    response = self._client.chat.completions.create(
-                        model=self.model_name,
-                        messages=[
-                            {"role": "system", "content": "You are a helpful assistant."},
-                            {"role": "user", "content": prompt}
-                        ]
-                    )
+                    messages.append({"role": "user", "content": prompt})
+                
+                response = self._client.chat.completions.create(
+                    model=self.model_name,
+                    messages=messages
+                )
                 return {
                     'content': response.choices[0].message.content,
                     'usage': {

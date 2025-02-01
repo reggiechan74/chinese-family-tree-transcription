@@ -1,7 +1,5 @@
 # Chinese Family Tree Processing System Data Flow
 
-# Model Data Flow
-
 ## Provider-Specific Data Handling
 
 1. **Direct API Providers**
@@ -42,7 +40,22 @@
    - Output: Processed text
    - Token tracking for text only
 
-[Previous content through Output File Structure section remains exactly as before]
+## Token Usage Tracking
+
+1. **Provider-Specific Tracking**
+   - OpenAI: Direct token counts from API
+   - Anthropic: Direct token counts from API
+   - Google: Estimated token counts
+   - Groq: Estimated token counts
+   - OpenRouter: Direct token counts from API
+
+2. **Cost Calculation**
+   - Input token rates
+   - Output token rates
+   - Image token estimation
+   - Provider-specific pricing
+
+## Output File Structure
 
 ### Stage Output Format
 ```markdown

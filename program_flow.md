@@ -1,40 +1,90 @@
 # Chinese Family Tree Processing System Flow
 
-# Model Provider Management
+1. **Model Provider Management**
+   - Provider Configuration
+     * API key management in .env
+     * Model capability tracking
+     * Token limit handling
+       - Claude-3 Opus: 4096 tokens
+       - Claude-3 Sonnet: 8192 tokens
+       - Other models: Provider limits
 
-1. **Provider Configuration**
-   - Provider-specific settings in `config.py`
-     * API key management
-     * Available models per provider
-     * Vision capability tracking
-     * Token limit handling (e.g., Claude-3 Opus 4096, Sonnet 8192)
+   - Provider Types
+     * Direct API Providers
+       - OpenAI (GPT-4 Vision models)
+       - Anthropic (Claude-3 models)
+       - Google (Gemini models)
+       - Groq (Llama models)
+     * API Aggregators
+       - OpenRouter
+         * Meta Llama models
+         * Deepseek models
+         * Grok models
+         * Custom headers and routing
 
-2. **Provider Types**
-   - Direct API Providers
-     * OpenAI (GPT-4 Vision models)
-     * Anthropic (Claude-3 models)
-     * Google (Gemini models)
-     * Groq (Llama models)
-   - API Aggregators
-     * OpenRouter
-       - Meta Llama models
-       - Deepseek models
-       - Grok models
-       - Custom headers and routing
+   - Model Capabilities
+     * Vision + Language Models
+       - Used in Stages 1-2 (transcription)
+       - Provider-specific implementations
+       - Base64 image handling
+     * Language-Only Models
+       - Used in Stages 3-8
+       - Text processing and analysis
+       - Translation and commentary
 
-3. **Model Capabilities**
-   - Vision + Language Models
-     * Used in Stages 1-2 (transcription)
-     * Provider-specific implementations
-     * Base64 image handling
-   - Language-Only Models
-     * Used in Stages 3-8
-     * Text processing and analysis
-     * Translation and commentary
+2. **Model Factory System**
+   - Stage-specific Model Creation
+     * Model capability validation
+     * Provider-specific initialization
+     * Token limit configuration
 
-[Previous content through Output Management section remains exactly as before]
+   - Client Management
+     * Provider-specific API clients
+     * Authentication handling
+     * Error recovery
 
-5. **Token Management**
+3. **Processing Pipeline**
+   - Stage 1: Initial Transcription
+     * Parallel processing with 3 models
+     * Vision model handling
+     * Base64 image encoding
+
+   - Stage 2: Secondary Transcription
+     * Alternative perspectives
+     * Cross-validation
+     * Error detection
+
+   - Stage 3: Analysis
+     * Transcription comparison
+     * Discrepancy identification
+     * Recommendation generation
+
+   - Stage 4: Review
+     * Comprehensive analysis
+     * Consensus building
+     * Final recommendations
+
+   - Stage 5: Final Transcription
+     * Authoritative version
+     * Error correction
+     * Quality assurance
+
+   - Stage 6: Punctuation
+     * Modern Chinese punctuation
+     * Readability enhancement
+     * Format standardization
+
+   - Stage 7: Translation
+     * English translation
+     * Pinyin annotation
+     * Cultural context
+
+   - Stage 8: Commentary
+     * Historical analysis
+     * Cultural insights
+     * Genealogical context
+
+4. **Token Management**
    - `token_costs.py`: Provider-specific cost rates
    - `token_counter.py`: Comprehensive token tracking
      * Per-model token counting
@@ -50,7 +100,7 @@
      * Rate limit tracking
      * Cost optimization
 
-6. **Output Management**
+5. **Output Management**
    - Run Directory Organization
      * Timestamped directories: `run_YYYYMMDD_HHMMSS/`
      * Stage-specific output files

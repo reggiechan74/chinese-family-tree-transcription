@@ -10,7 +10,10 @@ PROVIDER_CONFIGS = {
         'api_key_var': '_api_key_1',
         'models': [
             'gpt-4-turbo',           # Vision + Language
-            'gpt-4-vision-preview'    # Vision + Language
+            'gpt-4-vision-preview',   # Vision + Language
+            'chatgpt-4o-latest',     # Vision + Language
+            'o1-mini',               # Vision + Language
+            'o3-mini'                # Vision + Language
         ]
     },
     'anthropic': {
@@ -118,7 +121,7 @@ def validate_model_capability(provider: str, model: str, stage: int) -> None:
     
     # Vision-capable models
     vision_models = {
-        'openai': ['gpt-4-turbo', 'gpt-4-vision-preview'],
+        'openai': ['gpt-4-turbo', 'gpt-4-vision-preview', 'chatgpt-4o-latest', 'o1-mini', 'o3-mini'],
         'anthropic': ['claude-3-5-sonnet-20241022', 'claude-3-opus-20240229'],
         'google': ['gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-exp-1206', 'gemini-pro-vision'],
         'groq': ['llama-3.2-90b-vision-preview'],

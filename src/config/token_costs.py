@@ -21,6 +21,18 @@ TOKEN_COSTS = {
         'input': 0.01,
         'output': 0.03
     },
+    'chatgpt-4o-latest': {
+        'input': 0.01,
+        'output': 0.03
+    },
+    'o1-mini': {
+        'input': 0.01,
+        'output': 0.03
+    },
+    'o3-mini': {
+        'input': 0.01,
+        'output': 0.03
+    },
     'gpt-3.5-turbo': {
         'input': 0.001,
         'output': 0.002

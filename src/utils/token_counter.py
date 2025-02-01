@@ -2,7 +2,7 @@
 Utility for tracking token usage and costs across all stages and models.
 """
 from dataclasses import dataclass
-from typing import Dict, List
+from typing import Dict, List, Optional, Any
 import json
 from datetime import datetime
 import sys
@@ -121,6 +121,44 @@ class TokenTracker:
         print(f"- Total output tokens: {self.grand_total.output_tokens:,}")
         print(f"- Total cost: ${self.grand_total.cost:.4f}")
 
+    def get_stage_metrics(self, stage: str) -> Optional[Dict[str, Any]]:
+        """Get total metrics for a specific stage."""
+        if not self.tracking_enabled or stage not in self.stage_totals:
+            return None
+            
+        stage_total = self.stage_totals[stage]
+        return {
+            'input_tokens': stage_total.input_tokens,
+            'output_tokens': stage_total.output_tokens,
+            'cost': stage_total.cost
+        }
+        
+    def get_stage_models(self, stage: str) -> List[Dict[str, Any]]:
+        """Get detailed metrics for each model in a stage."""
+        if not self.tracking_enabled or stage not in self.usage_by_stage:
+            return []
+            
+        models = []
+        for model_key, usage in self.usage_by_stage[stage].items():
+            # Parse provider and model name from the model key
+            # Format: "Stage X Model Y - Provider ModelName Type"
+            parts = model_key.split(' - ')
+            if len(parts) != 2:
+                continue
+            provider_model = parts[1].split(' ')
+            provider = provider_model[0].lower()
+            model_name = ' '.join(provider_model[1:-1])  # Exclude the last part (Type)
+            
+            models.append({
+                'provider': provider,
+                'model_name': model_name,
+                'input_tokens': usage.input_tokens,
+                'output_tokens': usage.output_tokens,
+                'cost': usage.cost
+            })
+            
+        return sorted(models, key=lambda x: (x['provider'], x['model_name']))
+        
     def get_summary_dict(self) -> dict:
         """Get summary as a dictionary for saving to output file."""
         if not self.tracking_enabled:

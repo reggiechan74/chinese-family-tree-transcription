@@ -72,6 +72,11 @@ def process_image(image_path: str, token_tracking: bool = None, realtime_display
         # Initialize model manager
         manager = ModelManager()
         
+        # Create output directory
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        output_dir = os.path.join(current_dir, "output", f"run_{timestamp}")
+        manager.initialize_run(output_dir)
+        
         # Process image through all stages
         result = manager.process_image(
             image_base64=image_base64,

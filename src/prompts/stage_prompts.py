@@ -15,6 +15,7 @@ Please transcribe the Chinese text from this image accurately. Consider:
 2. Do not add any punctuation
 3. Do not make interpretive changes
 4. Preserve all characters exactly as they appear
+5. Do not add or delete any characters at this stage.
 
 Provide only the transcription without any explanation or commentary.
 take your time and think it through.
@@ -33,6 +34,7 @@ Please provide an independent transcription of this text. Consider:
 2. Do not add any punctuation
 3. Do not make interpretive changes
 4. Preserve all characters exactly as they appear
+5. Do not add or delete any characters at this stage.
 
 Provide only the transcription without any explanation or commentary.
 take your time and think it through.
@@ -55,7 +57,9 @@ Transcriptions to compare:
 {transcriptions}
 
 Compare these two transcriptions from the same model number and provide a detailed analysis. Consider:
+THIS IS DOCUMENT PERTAINS TO CHINESE GENEALOGY AND ANCESTRY AND EVENTS FROM THE PAST.
 NOTE CHARACTERS THAT LOOK SIMILAR.  
+LOOK AT THE CONTEXT OF THE WORDS BESIDE THE CHARACTERS TO HELP DETERMINE THE CORRECT CHARACTER.
 MAKE FIRST SET OF RECOMMENDATIONS TO SWAP CHARACTERS IF ABSOLUTELY NECESSARY.
 
 Your response should include:
@@ -64,7 +68,7 @@ Your response should include:
 3. A suggested final transcription based on reconciling the differences
 
 Provide your analysis, recommendations, and suggested transcription with detailed justification including recommended character swaps.
-take your time and think it through.
+take your time and think it through. Write the entire report without interruption and do not ask the user if he wants to continue.
 """
 
 class Stage4:
@@ -85,14 +89,15 @@ Stage 3 Reviews and Analyses:
 Based on these analyses, provide:
 1. A comprehensive review of the Stage 3 analyses
 2. Highlight areas of agreement and disagreement.  This is critical.
-2. Your recommended transcription with detailed justification
-3. Notes on any remaining uncertainties or concerns
-4. NOTE CHARACTERS THAT LOOK SIMILAR.  
-5. MAKE FIRST SET OF RECOMMENDATIONS TO SWAP CHARACTERS IF ABSOLUTELY NECESSARY.
+3. REMEMBER THAT YOU ARE REVIEWING A HISTORICAL CHINESE GENEALOGY DOCUMENT.  THIS WILL BE THE PRIMARY CONTEXT BEHIND YOUR REASONING PROCESS FOR CHARACTER SWAPS.
+4. Your recommended transcription with detailed justification
+5. Notes on any remaining uncertainties or concerns
+6. NOTE CHARACTERS THAT LOOK SIMILAR.  
+7. MAKE FIRST SET OF RECOMMENDATIONS TO SWAP CHARACTERS IF ABSOLUTELY NECESSARY.
 
 
 Your entire review including recommended character swaps and recommended transcription will be passed to Stage 5 for final evaluation.
-take your time and think it through.
+take your time and think it through. Write the entire report without interruption and do not ask the user if he wants to continue.
 """
 
 class Stage5:
@@ -127,6 +132,7 @@ Based on your independent review:
 Your task is to synthesize all this information and make your own independent judgment to produce the final authoritative transcription.
 
 Provide only the final transcription with your final explanation or commentary. This unpunctuated transcription will be passed to Stage 6 for independent punctuation.
+Take your time and think it through. Write the entire report without interruption and do not ask the user if he wants to continue.
 """
 
 class Stage6:
@@ -143,17 +149,8 @@ Your task is to independently add punctuation based solely on this text.
 Original text:
 {text}
 
-Add appropriate modern Chinese punctuation to make the text more readable while preserving its meaning.
-Consider:
-1. Classical Chinese grammar structures
-2. Natural pause points
-3. Logical grouping of ideas
-4. Modern Chinese punctuation conventions
-5. Text flow and readability
-6. Semantic units and relationships
-7. Traditional punctuation patterns for classical texts
+INSERT MODERN STANDARD PUNCTUATION THAT MOST ACCURATELY AND FAITHFULLY REPRESENTS THE ORIGINAL INTENTION OF THE WRITER.
 
-Make your punctuation decisions independently, based on your expertise and the text itself.
 Provide only the punctuated text without any explanation or commentary. This punctuated text will be passed to Stage 7 for independent translation.
 """
 
@@ -171,17 +168,11 @@ Your task is to independently translate this text based solely on its content.
 Original text:
 {text}
 
-Translate this text into clear, accurate English. Consider:
-1. Classical Chinese grammar structures
-2. Historical and cultural context
-3. Idiomatic expressions
-4. Proper names and titles
-5. Semantic relationships indicated by punctuation
-6. Text flow and readability
-7. Preservation of original meaning
-
-Make your translation decisions independently, based on your expertise and the text itself.
-Provide only the English translation without any explanation or commentary. This translation will be passed to Stage 8 for historical commentary.
+TRANSLATE INTO ENGLISH AS ACCURATELY AND FAITHFULLY AS POSSIBLE.  
+MAINTAIN A BALANCE BETWEEN LITERAL AND INTERPRETIVE. 
+WHERE A LITERAL TRANSLATION WOULD BE OBSCURE, OPT FOR A MORE INTERPRETIVE APPROACH TO CONVEY THE MEANING CLEARLY IN ENGLISH. 
+IF THERE ARE NAMES, WRITE THEM IN PINYIN WITH TONE MARKS AND PROVIDE THE CHINESE CHARACTERS AS WELL IN ().
+ This translation will be passed to Stage 8 for historical commentary.
 """
 
 class Stage8:
@@ -201,18 +192,13 @@ Punctuated Chinese text:
 English translation:
 {english_text}
 
-Provide historical and cultural commentary. Consider:
-1. Historical context and significance
-2. Cultural practices and beliefs
-3. Family relationships and hierarchy
-4. Notable historical figures or events mentioned
-5. Social structures and customs
-6. Traditional values and norms
-7. Historical period context
-8. Cultural significance of relationships
-9. Nuances that may be clearer in the original Chinese
-10. Cultural concepts that may not fully translate to English
+PLEASE PROVIDE COMMENTARY FOR THE TRANSLATED TEXT AND ADDRESS INDIVIDUALS OF HISTORICAL SIGNIFICANCE AND IDENTIFY TERMS THAT ARE UNFAMILIAR AND TRANSLATE DATES INTO GREGORIAN CALENDAR.  
 
-Make your commentary decisions independently, based on your expertise and both the Chinese and English texts.
-Provide a clear, informative commentary that helps readers understand the deeper context.
+RESPOND IN THIS FORMAT USING THE FOLLOWING SECTIONS:
+
+INDIVIDUALS OF HISTORICAL SIGNIFICANCE
+LOCATIONS OF HISTORICAL SIGNIFICANCE
+UNFAMILIAR, METAPHORICAL OR DIFFICULT TO INTERPRET TERMS
+TRANSLATION OF ANY IDENTIFIED DATES INTO GREGORIAN CALENDAR
+
 """

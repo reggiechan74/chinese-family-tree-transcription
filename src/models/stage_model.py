@@ -83,6 +83,36 @@ class StageModel(FinalStageModel):
     def _count_tokens(self, text: str) -> int:
         """Count tokens in a text string."""
         return len(self._encoder.encode(text))
+    
+    def _extract_transcription_chars(self, text: str) -> int:
+        """Extract and count characters from Chinese transcription sections."""
+        # For stages 1-2, the entire output is the transcription
+        if self.stage <= 2:
+            return len(text)
+            
+        # For stage 3-4, look for sections marked as "Recommended Transcription" or similar
+        if self.stage in [3, 4]:
+            import re
+            transcription = ""
+            patterns = [
+                r"建议的转录：\s*([^#\n]+)",  # Chinese
+                r"Recommended Transcription:\s*([^#\n]+)",  # English
+                r"转录：\s*([^#\n]+)",  # Shorter Chinese
+                r"Transcription:\s*([^#\n]+)"  # Shorter English
+            ]
+            for pattern in patterns:
+                matches = re.findall(pattern, text)
+                if matches:
+                    transcription = matches[0]
+                    break
+            return len(transcription.strip())
+            
+        # For stage 5-6, the entire output is the transcription
+        if self.stage in [5, 6]:
+            return len(text)
+            
+        # For stages 7-8, don't count characters as they don't produce Chinese transcriptions
+        return 0
             
     def _generate_content(self, prompt: str, image: Optional[str] = None) -> Dict[str, Any]:
         """
@@ -271,12 +301,14 @@ class StageModel(FinalStageModel):
         
         # Track token usage if tracker provided
         if token_tracker:
+            content = result['content'].strip()
             token_tracker.add_usage(
                 stage=f"Stage {self.stage}",
                 model=f"Stage {self.stage} Model {self.model_num} - {self.provider.title()} {self.model_name}",
                 model_name=self.model_name,
                 input_tokens=result['usage']['input_tokens'],
-                output_tokens=result['usage']['output_tokens']
+                output_tokens=result['usage']['output_tokens'],
+                char_count=self._extract_transcription_chars(content)
             )
         
         return result['content'].strip()
@@ -324,7 +356,8 @@ class StageModel(FinalStageModel):
                 model=f"Stage {self.stage} Model {self.model_num} - {self.provider.title()} {self.model_name}",
                 model_name=self.model_name,
                 input_tokens=result['usage']['input_tokens'],
-                output_tokens=result['usage']['output_tokens']
+                output_tokens=result['usage']['output_tokens'],
+                char_count=self._extract_transcription_chars(result['content'].strip())
             )
         
         return result['content'].strip()
@@ -371,7 +404,8 @@ class StageModel(FinalStageModel):
                 model=f"Stage {self.stage} Model {self.model_num} - {self.provider.title()} {self.model_name}",
                 model_name=self.model_name,
                 input_tokens=result['usage']['input_tokens'],
-                output_tokens=result['usage']['output_tokens']
+                output_tokens=result['usage']['output_tokens'],
+                char_count=self._extract_transcription_chars(result['content'].strip())
             )
         
         return result['content'].strip()
@@ -418,7 +452,8 @@ class StageModel(FinalStageModel):
                 model=f"Stage {self.stage} Model {self.model_num} - {self.provider.title()} {self.model_name}",
                 model_name=self.model_name,
                 input_tokens=result['usage']['input_tokens'],
-                output_tokens=result['usage']['output_tokens']
+                output_tokens=result['usage']['output_tokens'],
+                char_count=self._extract_transcription_chars(result['content'].strip())
             )
         
         return result['content'].strip()
@@ -453,7 +488,8 @@ class StageModel(FinalStageModel):
                 model=f"Stage {self.stage} Model {self.model_num} - {self.provider.title()} {self.model_name}",
                 model_name=self.model_name,
                 input_tokens=result['usage']['input_tokens'],
-                output_tokens=result['usage']['output_tokens']
+                output_tokens=result['usage']['output_tokens'],
+                char_count=self._extract_transcription_chars(result['content'].strip())
             )
         
         return result['content'].strip()
@@ -488,7 +524,8 @@ class StageModel(FinalStageModel):
                 model=f"Stage {self.stage} Model {self.model_num} - {self.provider.title()} {self.model_name}",
                 model_name=self.model_name,
                 input_tokens=result['usage']['input_tokens'],
-                output_tokens=result['usage']['output_tokens']
+                output_tokens=result['usage']['output_tokens'],
+                char_count=self._extract_transcription_chars(result['content'].strip())
             )
         
         return result['content'].strip()
@@ -524,7 +561,8 @@ class StageModel(FinalStageModel):
                 model=f"Stage {self.stage} Model {self.model_num} - {self.provider.title()} {self.model_name}",
                 model_name=self.model_name,
                 input_tokens=result['usage']['input_tokens'],
-                output_tokens=result['usage']['output_tokens']
+                output_tokens=result['usage']['output_tokens'],
+                char_count=len(result['content'].strip())
             )
         
         return result['content'].strip()

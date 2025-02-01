@@ -73,12 +73,19 @@ class ModelManager:
         seconds = processing_time % 60
         time_str = f"{minutes}m {seconds:.2f}s"
 
+        # Get stage metrics for character count
+        stage_metrics = self.token_tracker.get_stage_metrics(f"Stage {stage_num}")
+        char_count = stage_metrics.get('char_count', 0) if stage_metrics else 0
+
         # Add header with processing time and totals
         header = f"# Stage {stage_num} Output\n\n"
         header += f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n"
         header += f"Processing Time: {time_str}\n"
         header += f"Total Token Count: {total_tokens:,} tokens\n"
-        header += f"Total Cost: ${total_cost:.4f}\n\n"
+        header += f"Total Cost: ${total_cost:.4f}\n"
+        if char_count > 0:
+            header += f"Chinese Characters: {char_count:,}\n"
+        header += "\n"
         
         # Part 1: Input from Previous Stage
         part1 = "## Input from Previous Stage\n\n"
@@ -98,8 +105,17 @@ class ModelManager:
             for key, data in next_stage_data.items():
                 token_count = count_tokens(data)
                 total_tokens += token_count
+                # Get character count for this transcription from token tracker
+                stage_models = self.token_tracker.get_stage_models(f"Stage {stage_num}")
+                char_count = 0
+                for model_info in stage_models:
+                    if f"{model_info['provider'].title()} {model_info['model_name']}" in key:
+                        char_count = model_info.get('char_count', 0)
+                        break
                 part2 += f"### {key}\n"
                 part2 += f"Token count: {token_count:,} tokens\n"
+                if char_count > 0:
+                    part2 += f"Chinese Characters: {char_count:,}\n"
                 part2 += f"```\n{data}\n```\n\n"
             part2 += f"\nTotal tokens being passed to next stage: {total_tokens:,} tokens\n"
         else:
@@ -382,11 +398,13 @@ class ModelManager:
                 total_input_tokens += stage_metrics['input_tokens']
                 total_output_tokens += stage_metrics['output_tokens']
                 total_cost += stage_metrics['cost']
+                char_count = stage_metrics.get('char_count', 0)
                 stages.append({
                     'stage': stage_num,
                     'input_tokens': stage_metrics['input_tokens'],
                     'output_tokens': stage_metrics['output_tokens'],
-                    'cost': stage_metrics['cost']
+                    'cost': stage_metrics['cost'],
+                    'char_count': char_count
                 })
         
         # Generate markdown report
@@ -411,8 +429,8 @@ class ModelManager:
                     continue
                     
                 f.write(f"### Stage {stage_num}\n\n")
-                f.write("| Model | Input Tokens | Output Tokens | Cost ($) |\n")
-                f.write("|-------|--------------|---------------|----------|\n")
+                f.write("| Model | Input Tokens | Output Tokens | Cost ($) | Chinese Characters |\n")
+                f.write("|-------|--------------|---------------|----------|-------------------||\n")
                 
                 stage_input = 0
                 stage_output = 0
@@ -436,21 +454,26 @@ class ModelManager:
                     provider_model_totals[key]['cost'] += cost
                     
                     # Write model row
-                    f.write(f"| {provider.title()} {model_name} | {input_tokens:,} | {output_tokens:,} | ${cost:.4f} |\n")
+                    char_count = model_info.get('char_count', 0)
+                    f.write(f"| {provider.title()} {model_name} | {input_tokens:,} | {output_tokens:,} | ${cost:.4f} | {char_count:,} |\n")
                     
                     stage_input += input_tokens
                     stage_output += output_tokens
                     stage_cost += cost
                 
                 # Write stage total row
-                f.write("|-------|--------------|---------------|----------|\n")
-                f.write(f"| **Stage {stage_num} Total** | **{stage_input:,}** | **{stage_output:,}** | **${stage_cost:.4f}** |\n\n")
+                stage_char_count = stage_metrics.get('char_count', 0)
+                f.write("|-------|--------------|---------------|----------|-------------------|\n")
+                f.write(f"| **Stage {stage_num} Total** | **{stage_input:,}** | **{stage_output:,}** | **${stage_cost:.4f}** | **{stage_char_count:,}** |\n\n")
             
             # Write grand total row
             f.write("### Pipeline Totals\n\n")
-            f.write("| Stage | Input Tokens | Output Tokens | Cost ($) |\n")
-            f.write("|-------|--------------|---------------|----------|\n")
-            f.write(f"| **TOTAL** | **{total_input_tokens:,}** | **{total_output_tokens:,}** | **${total_cost:.4f}** |\n\n")
+            # Calculate total character count
+            total_char_count = sum(stage.get('char_count', 0) for stage in stages)
+
+            f.write("| Stage | Input Tokens | Output Tokens | Cost ($) | Chinese Characters |\n")
+            f.write("|-------|--------------|---------------|----------|-------------------|\n")
+            f.write(f"| **TOTAL** | **{total_input_tokens:,}** | **{total_output_tokens:,}** | **${total_cost:.4f}** | **{total_char_count:,}** |\n\n")
             
             # Write provider/model summary table
             f.write("## Provider and Model Summary\n\n")

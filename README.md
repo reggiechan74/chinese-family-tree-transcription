@@ -19,23 +19,27 @@ src/
 ├── config/               # Configuration management
 │   ├── __init__.py
 │   ├── token_costs.py   # Token cost rates and calculations
-│   └── config.py        # System configuration
+│   └── config.py        # System configuration and model providers
 ├── models/              # LLM model implementations
 │   ├── __init__.py
-│   ├── model_interfaces.py
-│   ├── model_factory.py
-│   ├── model_manager.py
-│   ├── llm1.py
-│   ├── llm2.py
-│   ├── llm3.py
-│   └── llm4.py
+│   ├── model_interfaces.py  # Base interfaces for model types
+│   ├── model_factory.py    # Factory for creating model instances
+│   ├── model_manager.py    # Manages model lifecycle and interactions
+│   └── stage_model.py      # Stage-specific model implementation
 ├── prompts/             # Stage-specific prompts
 │   ├── __init__.py
-│   └── stage_prompts.py
-└── utils/               # Utility functions
-    ├── __init__.py
-    ├── image_utils.py
-    └── token_counter.py
+│   └── stage_prompts.py    # Prompts for each processing stage
+├── utils/               # Utility functions
+│   ├── __init__.py
+│   ├── image_utils.py      # Image processing utilities
+│   └── token_counter.py    # Token usage tracking
+└── output/              # Generated output files
+
+cline_docs/              # System documentation
+├── projectRoadmap.md    # Project goals and progress
+├── currentTask.md       # Current objectives and context
+├── techStack.md         # Technology decisions
+└── codebaseSummary.md   # Project structure overview
 ```
 
 ## Installation

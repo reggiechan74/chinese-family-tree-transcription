@@ -1,5 +1,40 @@
 # Chinese Family Tree Processing System Specifications
 
+# Model Providers and Capabilities
+
+## Vision + Language Models
+- OpenAI
+  * gpt-4-turbo
+  * gpt-4-vision-preview
+
+- Anthropic
+  * claude-3-opus-20240229 (4096 max output tokens)
+  * claude-3-5-sonnet-20241022 (8192 max output tokens)
+
+- Google
+  * gemini-2.0-flash-exp
+  * gemini-1.5-pro
+  * gemini-exp-1206
+  * gemini-pro-vision
+
+- OpenRouter
+  * meta-llama/llama-3.2-90b-vision-instruct
+  * x-ai/grok-2-vision-1212
+
+## Language-Only Models
+- Google
+  * gemini-pro
+
+- OpenRouter
+  * deepseek/deepseek-r1:free
+
+- Groq
+  * llama-3.2-90b-vision-preview
+  * deepseek-r1-distill-llama-70b
+  * mixtral-8x7b-32768
+  * llama2-70b-4096
+  * llama-3.3-70b-versatile
+
 [Previous content through Output Management System section remains exactly as before]
 
 ### Output Directory Structure

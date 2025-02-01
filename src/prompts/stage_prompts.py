@@ -16,6 +16,7 @@ Please transcribe the Chinese text from this image accurately. Consider:
 3. Do not make interpretive changes
 4. Preserve all characters exactly as they appear
 5. Do not add or delete any characters at this stage.
+6.  The transciption output must be in traditional Chinese characters.
 
 Provide only the transcription without any explanation or commentary.
 take your time and think it through.
@@ -35,6 +36,7 @@ Please provide an independent transcription of this text. Consider:
 3. Do not make interpretive changes
 4. Preserve all characters exactly as they appear
 5. Do not add or delete any characters at this stage.
+6. The output must be in traditional Chinese characters.
 
 Provide only the transcription without any explanation or commentary.
 take your time and think it through.
@@ -60,12 +62,13 @@ Compare these two transcriptions from the same model number and provide a detail
 THIS IS DOCUMENT PERTAINS TO CHINESE GENEALOGY AND ANCESTRY AND EVENTS FROM THE PAST.
 NOTE CHARACTERS THAT LOOK SIMILAR.  
 LOOK AT THE CONTEXT OF THE WORDS BESIDE THE CHARACTERS TO HELP DETERMINE THE CORRECT CHARACTER.
-MAKE FIRST SET OF RECOMMENDATIONS TO SWAP CHARACTERS IF ABSOLUTELY NECESSARY.
+MAKE FIRST SET OF RECOMMENDATIONS TO SWAP CHARACTERS ONLY IF ABSOLUTELY NECESSARY.
 
 Your response should include:
 1. Detailed analysis of differences between Stage 1 and Stage 2 transcriptions
 2. Identify areas of agreement and disagreement
 3. A suggested final transcription based on reconciling the differences
+4. The final transcription must be in traditional Chinese characters.
 
 Provide your analysis, recommendations, and suggested transcription with detailed justification including recommended character swaps.
 take your time and think it through. Write the entire report without interruption and do not ask the user if he wants to continue.
@@ -93,7 +96,7 @@ Based on these analyses, provide:
 4. Your recommended transcription with detailed justification
 5. Notes on any remaining uncertainties or concerns
 6. NOTE CHARACTERS THAT LOOK SIMILAR.  
-7. MAKE FIRST SET OF RECOMMENDATIONS TO SWAP CHARACTERS IF ABSOLUTELY NECESSARY.
+7. MAKE second SET OF RECOMMENDATIONS TO SWAP CHARACTERS only IF ABSOLUTELY NECESSARY.
 
 
 Your entire review including recommended character swaps and recommended transcription will be passed to Stage 5 for final evaluation.
@@ -169,7 +172,8 @@ Original text:
 {text}
 
 TRANSLATE INTO ENGLISH AS ACCURATELY AND FAITHFULLY AS POSSIBLE.  
-MAINTAIN A BALANCE BETWEEN LITERAL AND INTERPRETIVE. 
+NOTE THAT DURING THIS TIME PERIOD, THE CHINESE LANGUAGE WAS MORE FORMALLY WRITTEN AND LITERARY.
+MAINTAIN A BALANCE BETWEEN LITERAL IF POETIC IN NATURE AND INTERPRETIVE IF TOO OBSCURE IN MEANING.
 WHERE A LITERAL TRANSLATION WOULD BE OBSCURE, OPT FOR A MORE INTERPRETIVE APPROACH TO CONVEY THE MEANING CLEARLY IN ENGLISH. 
 IF THERE ARE NAMES, WRITE THEM IN PINYIN WITH TONE MARKS AND PROVIDE THE CHINESE CHARACTERS AS WELL IN ().
  This translation will be passed to Stage 8 for historical commentary.

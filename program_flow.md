@@ -1,5 +1,37 @@
 # Chinese Family Tree Processing System Flow
 
+# Model Provider Management
+
+1. **Provider Configuration**
+   - Provider-specific settings in `config.py`
+     * API key management
+     * Available models per provider
+     * Vision capability tracking
+     * Token limit handling (e.g., Claude-3 Opus 4096, Sonnet 8192)
+
+2. **Provider Types**
+   - Direct API Providers
+     * OpenAI (GPT-4 Vision models)
+     * Anthropic (Claude-3 models)
+     * Google (Gemini models)
+     * Groq (Llama models)
+   - API Aggregators
+     * OpenRouter
+       - Meta Llama models
+       - Deepseek models
+       - Grok models
+       - Custom headers and routing
+
+3. **Model Capabilities**
+   - Vision + Language Models
+     * Used in Stages 1-2 (transcription)
+     * Provider-specific implementations
+     * Base64 image handling
+   - Language-Only Models
+     * Used in Stages 3-8
+     * Text processing and analysis
+     * Translation and commentary
+
 [Previous content through Output Management section remains exactly as before]
 
 5. **Token Management**

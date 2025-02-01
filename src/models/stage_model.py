@@ -32,7 +32,8 @@ class StageModel(FinalStageModel):
         'google': 'cl100k_base',  # Same as GPT-4
         'openai': 'cl100k_base',
         'groq': 'cl100k_base',
-        'anthropic': 'cl100k_base'
+        'anthropic': 'cl100k_base',
+        'openrouter': 'cl100k_base'
     }
     
     def __init__(self, provider: str, model_name: str, stage: int, model_num: int):
@@ -61,6 +62,13 @@ class StageModel(FinalStageModel):
         elif self.provider == 'anthropic':
             from anthropic import Anthropic
             self._client = Anthropic(api_key=os.getenv('ANTHROPIC_API_KEY'))
+            
+        elif self.provider == 'openrouter':
+            from openai import OpenAI
+            self._client = OpenAI(
+                base_url="https://openrouter.ai/api/v1",
+                api_key=os.getenv('OPENROUTER_API_KEY')
+            )
             
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
@@ -149,9 +157,10 @@ class StageModel(FinalStageModel):
                 
             elif self.provider == 'anthropic':
                 if image:
+                    max_tokens = 4096 if 'claude-3-opus' in self.model_name else 8192
                     response = self._client.messages.create(
                         model=self.model_name,
-                        max_tokens=8192,
+                        max_tokens=max_tokens,
                         messages=[{
                             "role": "user",
                             "content": [
@@ -161,9 +170,10 @@ class StageModel(FinalStageModel):
                         }]
                     )
                 else:
+                    max_tokens = 4096 if 'claude-3-opus' in self.model_name else 8192
                     response = self._client.messages.create(
                         model=self.model_name,
-                        max_tokens=8192,
+                        max_tokens=max_tokens,
                         messages=[{
                             "role": "user",
                             "content": prompt
@@ -175,6 +185,42 @@ class StageModel(FinalStageModel):
                     'usage': {
                         'input_tokens': self._count_tokens(prompt),
                         'output_tokens': self._count_tokens(content)
+                    }
+                }
+                
+            elif self.provider == 'openrouter':
+                if image:
+                    response = self._client.chat.completions.create(
+                        model=self.model_name,
+                        messages=[
+                            {"role": "system", "content": "You are a helpful assistant."},
+                            {"role": "user", "content": [
+                                {"type": "text", "text": prompt},
+                                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{image}"}}
+                            ]}
+                        ],
+                        extra_headers={
+                            "HTTP-Referer": "https://github.com/reggiechan74/chinese-family-tree-transcription",
+                            "X-Title": "Chinese Family Tree Transcription"
+                        }
+                    )
+                else:
+                    response = self._client.chat.completions.create(
+                        model=self.model_name,
+                        messages=[
+                            {"role": "system", "content": "You are a helpful assistant."},
+                            {"role": "user", "content": prompt}
+                        ],
+                        extra_headers={
+                            "HTTP-Referer": "https://github.com/reggiechan74/chinese-family-tree-transcription",
+                            "X-Title": "Chinese Family Tree Transcription"
+                        }
+                    )
+                return {
+                    'content': response.choices[0].message.content,
+                    'usage': {
+                        'input_tokens': response.usage.prompt_tokens,
+                        'output_tokens': response.usage.completion_tokens
                     }
                 }
                 

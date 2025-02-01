@@ -26,7 +26,8 @@ PROVIDER_CONFIGS = {
             'gemini-2.0-flash-exp',   # Vision + Language
             'gemini-1.5-pro',         # Vision + Language
             'gemini-exp-1206',        # Vision + Language
-            'gemini-pro'              # Language only
+            'gemini-pro',             # Language only
+            'gemini-pro-vision'       # Vision + Language
         ]
     },
     'groq': {
@@ -38,6 +39,14 @@ PROVIDER_CONFIGS = {
             'llama2-70b-4096',                  # Language only
             'llama-3.3-70b-versatile'           # Language only
         ]
+    },
+    'openrouter': {
+        'api_key_var': '_api_key_5',
+        'models': [
+            'meta-llama/llama-3.2-90b-vision-instruct',  # Vision + Language
+            'deepseek/deepseek-r1:free',                 # Language only
+            'x-ai/grok-2-vision-1212'                    # Vision + Language
+        ]
     }
 }
 
@@ -46,7 +55,8 @@ _PROVIDER_API_KEYS = {
     'openai': 'OPENAI_API_KEY',
     'anthropic': 'ANTHROPIC_API_KEY',
     'google': 'GOOGLE_API_KEY',
-    'groq': 'GROQ_API_KEY'
+    'groq': 'GROQ_API_KEY',
+    'openrouter': 'OPENROUTER_API_KEY'
 }
 
 def validate_api_key(provider: str) -> None:
@@ -110,8 +120,9 @@ def validate_model_capability(provider: str, model: str, stage: int) -> None:
     vision_models = {
         'openai': ['gpt-4-turbo', 'gpt-4-vision-preview'],
         'anthropic': ['claude-3-5-sonnet-20241022', 'claude-3-opus-20240229'],
-        'google': ['gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-exp-1206'],
-        'groq': ['llama-3.2-90b-vision-preview']
+        'google': ['gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-exp-1206', 'gemini-pro-vision'],
+        'groq': ['llama-3.2-90b-vision-preview'],
+        'openrouter': ['meta-llama/llama-3.2-90b-vision-instruct', 'x-ai/grok-2-vision-1212']
     }
     
     if vision_required and provider in vision_models:

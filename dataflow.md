@@ -1,5 +1,47 @@
 # Chinese Family Tree Processing System Data Flow
 
+# Model Data Flow
+
+## Provider-Specific Data Handling
+
+1. **Direct API Providers**
+   - OpenAI
+     * Standard chat completion format
+     * Base64 image embedding for vision tasks
+   - Anthropic
+     * Messages API format
+     * Model-specific token limits (Opus: 4096, Sonnet: 8192)
+     * Base64 image handling with source type
+   - Google
+     * GenerativeModel format
+     * Direct image data handling
+   - Groq
+     * Standard chat completion format
+     * Text-only processing
+
+2. **API Aggregators**
+   - OpenRouter
+     * OpenAI-compatible API format
+     * Custom HTTP headers for routing
+     * Provider-specific model handling
+       - Meta Llama vision models
+       - Deepseek language models
+       - Grok vision models
+
+## Data Flow by Stage Type
+
+1. **Vision Stages (1-2)**
+   - Input: Base64 encoded image
+   - Provider-specific image handling
+   - Output: Transcribed text
+   - Token tracking for both text and image
+
+2. **Language Stages (3-8)**
+   - Input: Text from previous stage
+   - Standard text processing
+   - Output: Processed text
+   - Token tracking for text only
+
 [Previous content through Output File Structure section remains exactly as before]
 
 ### Stage Output Format

@@ -47,15 +47,36 @@ graph TD
 
     %% Stage 5-8: Final Processing
     Stage4Results --> Stage5[Stage 5: Final Transcription]
+    Stage5 --> |Generate| Stage5Report[Stage 5 Report]
     Stage5 --> Stage6[Stage 6: Add Punctuation]
+    Stage6 --> |Generate| Stage6Report[Stage 6 Report]
     Stage6 --> Stage7[Stage 7: English Translation]
+    Stage7 --> |Generate| Stage7Report[Stage 7 Report]
     Stage7 --> Stage8[Stage 8: Historical Commentary]
+    Stage8 --> |Generate| Stage8Report[Stage 8 Report]
 
-    %% Output Generation
-    Stage8 --> GenerateReport[Generate Reports]
+    %% Stage Reports (1-4)
+    Stage1Results --> |Generate| Stage1Report[Stage 1 Report]
+    Stage2Results --> |Generate| Stage2Report[Stage 2 Report]
+    Stage3Results --> |Generate| Stage3Report[Stage 3 Report]
+    Stage4Results --> |Generate| Stage4Report[Stage 4 Report]
+
+    %% Final Output Generation
+    Stage8 --> GenerateReport[Generate Final Reports]
     GenerateReport --> |Summary| SummaryReport[Summary Report]
     GenerateReport --> |Presentation| PresentationReport[Presentation Report]
     GenerateReport --> |Token Usage| TokenReport[Token Usage Report]
+
+    %% Report Collection
+    Stage1Report --> ReportCollection[Report Collection]
+    Stage2Report --> ReportCollection
+    Stage3Report --> ReportCollection
+    Stage4Report --> ReportCollection
+    Stage5Report --> ReportCollection
+    Stage6Report --> ReportCollection
+    Stage7Report --> ReportCollection
+    Stage8Report --> ReportCollection
+    ReportCollection --> GenerateReport
 
     %% Error Handling
     LoadEnv --> |Error| ErrorHandler[Error Handler]

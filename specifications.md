@@ -1,8 +1,10 @@
 # Chinese Family Tree Processing System Specifications
 
-# Model Providers and Capabilities
+# System Components
 
-## Vision + Language Models
+## Model Providers and Capabilities
+
+### Vision + Language Models
 - OpenAI
   * gpt-4-turbo
   * gpt-4-vision-preview
@@ -21,7 +23,7 @@
   * meta-llama/llama-3.2-90b-vision-instruct
   * x-ai/grok-2-vision-1212
 
-## Language-Only Models
+### Language-Only Models
 - Google
   * gemini-pro
 
@@ -35,7 +37,57 @@
   * llama2-70b-4096
   * llama-3.3-70b-versatile
 
-[Previous content through Output Management System section remains exactly as before]
+## Directory Structure
+
+```
+src/
+├── config/               # Configuration management
+│   ├── __init__.py
+│   ├── token_costs.py   # Token cost rates and calculations
+│   └── config.py        # System configuration and model providers
+├── models/              # LLM model implementations
+│   ├── __init__.py
+│   ├── model_interfaces.py  # Base interfaces for model types
+│   ├── model_factory.py    # Factory for creating model instances
+│   ├── model_manager.py    # Manages model lifecycle and interactions
+│   └── stage_model.py      # Stage-specific model implementation
+├── prompts/             # Stage-specific prompts
+│   ├── __init__.py
+│   └── stage_prompts.py    # Prompts for each processing stage
+├── utils/               # Utility functions
+│   ├── __init__.py
+│   ├── image_utils.py      # Image processing utilities
+│   └── token_counter.py    # Token usage tracking
+└── output/              # Generated output files
+
+cline_docs/              # System documentation
+├── projectRoadmap.md    # Project goals and progress
+├── currentTask.md       # Current objectives and context
+├── techStack.md         # Technology decisions
+└── codebaseSummary.md   # Project structure overview
+```
+
+## Model Management System
+
+### Provider Configuration
+- API key management through environment variables
+- Model capability validation
+- Token limit handling
+  * Claude-3 Opus: 4096 max output tokens
+  * Claude-3 Sonnet: 8192 max output tokens
+  * Other models: Provider-specific limits
+
+### Model Factory
+- Stage-specific model instantiation
+- Provider-specific client initialization
+- Capability validation for each stage
+
+### Model Manager
+- Model lifecycle management
+- Token usage tracking
+- Error handling and recovery
+
+## Output Management System
 
 ### Output Directory Structure
 ```

@@ -48,7 +48,8 @@ PROVIDER_CONFIGS = {
         'models': [
             'meta-llama/llama-3.2-90b-vision-instruct',  # Vision + Language
             'deepseek/deepseek-r1:free',                 # Language only
-            'x-ai/grok-2-vision-1212'                    # Vision + Language
+            'x-ai/grok-2-vision-1212',                   # Vision + Language
+            'qwen/qvq-72b-preview'                       # Vision + Language
         ]
     }
 }
@@ -125,7 +126,7 @@ def validate_model_capability(provider: str, model: str, stage: int) -> None:
         'anthropic': ['claude-3-5-sonnet-20241022', 'claude-3-opus-20240229'],
         'google': ['gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-exp-1206', 'gemini-pro-vision'],
         'groq': ['llama-3.2-90b-vision-preview'],
-        'openrouter': ['meta-llama/llama-3.2-90b-vision-instruct', 'x-ai/grok-2-vision-1212']
+        'openrouter': ['meta-llama/llama-3.2-90b-vision-instruct', 'x-ai/grok-2-vision-1212', 'qwen/qvq-72b-preview']
     }
     
     if vision_required and provider in vision_models:

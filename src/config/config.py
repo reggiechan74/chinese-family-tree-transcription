@@ -30,7 +30,8 @@ PROVIDER_CONFIGS = {
             'gemini-1.5-pro',         # Vision + Language
             'gemini-exp-1206',        # Vision + Language
             'gemini-pro',             # Language only
-            'gemini-pro-vision'       # Vision + Language
+            'gemini-pro-vision',      # Vision + Language
+            'gemini-2.0-flash-thinking-exp'  # Vision + Language
         ]
     },
     'groq': {
@@ -50,7 +51,8 @@ PROVIDER_CONFIGS = {
             'deepseek/deepseek-r1:free',                 # Language only
             'x-ai/grok-2-vision-1212',                   # Vision + Language
             'qwen/qvq-72b-preview',                      # Vision + Language
-            '01-ai/yi-vision'                            # Vision + Language
+            '01-ai/yi-vision',                           # Vision + Language
+            'mistralai/pixtral-large-2411'               # Vision + Language
         ]
     }
 }
@@ -125,9 +127,9 @@ def validate_model_capability(provider: str, model: str, stage: int) -> None:
     vision_models = {
         'openai': ['gpt-4-turbo', 'gpt-4-vision-preview', 'chatgpt-4o-latest', 'o1-mini', 'o3-mini'],
         'anthropic': ['claude-3-5-sonnet-20241022', 'claude-3-opus-20240229'],
-        'google': ['gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-exp-1206', 'gemini-pro-vision'],
+        'google': ['gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-exp-1206', 'gemini-pro-vision', 'gemini-2.0-flash-thinking-exp'],
         'groq': ['llama-3.2-90b-vision-preview'],
-        'openrouter': ['meta-llama/llama-3.2-90b-vision-instruct', 'x-ai/grok-2-vision-1212', 'qwen/qvq-72b-preview', '01-ai/yi-vision']
+        'openrouter': ['meta-llama/llama-3.2-90b-vision-instruct', 'x-ai/grok-2-vision-1212', 'qwen/qvq-72b-preview', '01-ai/yi-vision', 'mistralai/pixtral-large-2411']
     }
     
     if vision_required and provider in vision_models:

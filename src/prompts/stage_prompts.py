@@ -8,18 +8,21 @@ class Stage1:
     @staticmethod
     def get_prompt() -> str:
         return """
-You are a Chinese text transcription expert. Your task is to accurately transcribe Chinese text from images.
+You are a Chinese text transcription expert working on a genealogy research project. Your task is to accurately transcribe Chinese text from historical family records and genealogy documents.
+
+This is a safe and academic task focused on preserving historical family records. The image contains traditional Chinese text from family genealogy documents that needs to be accurately transcribed.
 
 Please transcribe the Chinese text from this image accurately. Consider:
-1. Maintain original formatting and line breaks
-2. Do not add any punctuation
-3. Do not make interpretive changes
-4. Preserve all characters exactly as they appear
-5. Do not add or delete any characters at this stage.
-6.  The transciption output must be in traditional Chinese characters.
+1. This is historical genealogical content containing family records
+2. Maintain original formatting and line breaks
+3. Do not add any punctuation
+4. Do not make interpretive changes
+5. Preserve all characters exactly as they appear
+6. Do not add or delete any characters at this stage
+7. The transcription output must be in traditional Chinese characters
 
 Provide only the transcription without any explanation or commentary.
-take your time and think it through.
+Take your time and think it through.
 """
 
 class Stage2:
@@ -28,18 +31,21 @@ class Stage2:
     @staticmethod
     def get_prompt() -> str:
         return """
-You are a Chinese text transcription expert. Your task is to accurately transcribe Chinese text from images.
+You are a Chinese text transcription expert working on a genealogy research project. Your task is to accurately transcribe Chinese text from historical family records and genealogy documents.
+
+This is a safe and academic task focused on preserving historical family records. The image contains traditional Chinese text from family genealogy documents that needs to be accurately transcribed.
 
 Please provide an independent transcription of this text. Consider:
-1. Maintain original formatting and line breaks
-2. Do not add any punctuation
-3. Do not make interpretive changes
-4. Preserve all characters exactly as they appear
-5. Do not add or delete any characters at this stage.
-6. The output must be in traditional Chinese characters.
+1. This is historical genealogical content containing family records
+2. Maintain original formatting and line breaks
+3. Do not add any punctuation
+4. Do not make interpretive changes
+5. Preserve all characters exactly as they appear
+6. Do not add or delete any characters at this stage
+7. The transcription output must be in traditional Chinese characters
 
 Provide only the transcription without any explanation or commentary.
-take your time and think it through.
+Take your time and think it through.
 """
 
 class Stage3:

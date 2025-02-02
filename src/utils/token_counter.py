@@ -16,7 +16,8 @@ from config.token_costs import (
     get_cost_breakdown,
     is_token_tracking_enabled,
     should_display_realtime_usage,
-    should_save_usage_report
+    should_save_usage_report,
+    should_show_stage_inputs
 )
 
 def count_tokens(text: str) -> int:
@@ -51,8 +52,10 @@ class TokenTracker:
         self.stage_totals: Dict[str, TokenUsage] = {}
         self.grand_total = TokenUsage(0, 0, 0.0, 0)
         self.tracking_enabled = is_token_tracking_enabled()
+        self.stage_inputs: Dict[str, str] = {}  # Store stage inputs for optional display
+        self.model_fallbacks: Dict[str, Dict[str, str]] = {}  # Track model fallbacks by stage
 
-    def add_usage(self, stage: str, model: str, model_name: str, input_tokens: int, output_tokens: int, char_count: Optional[int] = None):
+    def add_usage(self, stage: str, model: str, model_name: str, input_tokens: int, output_tokens: int, char_count: Optional[int] = None, stage_input: Optional[str] = None, fallback_info: Optional[Dict[str, str]] = None):
         """Record token usage and character count for a specific stage and model."""
         if not self.tracking_enabled:
             return
@@ -60,6 +63,12 @@ class TokenTracker:
         if stage not in self.usage_by_stage:
             self.usage_by_stage[stage] = {}
             self.stage_totals[stage] = TokenUsage(0, 0, 0.0, 0)
+
+        # Store stage input and fallback info if provided
+        if stage_input is not None:
+            self.stage_inputs[stage] = stage_input
+        if fallback_info is not None:
+            self.model_fallbacks[stage] = fallback_info
 
         # Calculate cost using centralized token costs
         cost = calculate_cost(model_name, input_tokens, output_tokens)
@@ -100,6 +109,15 @@ class TokenTracker:
             return
 
         print(f"\n=== {stage} Token Usage ===")
+        
+        # Handle stage input display
+        print("\nStage Input:")
+        if should_show_stage_inputs() and stage in self.stage_inputs:
+            print(self.stage_inputs[stage])
+        else:
+            print("INPUTS HIDDEN FROM USER. TO VIEW, CHANGE STAGE INPUT SETTINGS IN .ENV FILE")
+        print()
+
         for model, usage in self.usage_by_stage[stage].items():
             print(f"- {model}:")
             print(f"  - Input tokens:  {usage['input_tokens']:,}")
@@ -125,6 +143,15 @@ class TokenTracker:
         
         for stage in sorted(self.usage_by_stage.keys()):
             print(f"\n{stage}")
+            
+            # Handle stage input display
+            print("\nStage Input:")
+            if should_show_stage_inputs() and stage in self.stage_inputs:
+                print(self.stage_inputs[stage])
+            else:
+                print("INPUTS HIDDEN FROM USER. TO VIEW, CHANGE STAGE INPUT SETTINGS IN .ENV FILE")
+            print()
+                
             stage_total = self.stage_totals[stage]
             print(f"- Input tokens:  {stage_total.input_tokens:,}")
             print(f"- Output tokens: {stage_total.output_tokens:,}")
@@ -145,12 +172,17 @@ class TokenTracker:
             return None
             
         stage_total = self.stage_totals[stage]
-        return {
+        metrics = {
             'input_tokens': stage_total.input_tokens,
             'output_tokens': stage_total.output_tokens,
             'cost': stage_total.cost,
             'char_count': stage_total.char_count
         }
+        
+        if should_show_stage_inputs() and stage in self.stage_inputs:
+            metrics['stage_input'] = self.stage_inputs[stage]
+            
+        return metrics
         
     def get_stage_models(self, stage: str) -> List[Dict[str, Any]]:
         """Get detailed metrics for each model in a stage."""
@@ -207,6 +239,10 @@ class TokenTracker:
                 }
             }
             
+            # Add stage input if enabled
+            if should_show_stage_inputs() and stage in self.stage_inputs:
+                stage_data['stage_input'] = self.stage_inputs[stage]
+            
             for model, usage in models.items():
                 model_data = {
                     'input_tokens': usage['input_tokens'],
@@ -233,6 +269,16 @@ class TokenTracker:
             f.write("# Token Usage and Cost Report\n\n")
             f.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n\n")
             
+            # Write model fallback information if any occurred
+            if self.model_fallbacks:
+                f.write("## Model Fallbacks\n\n")
+                f.write("The following stages encountered errors and fell back to default models:\n\n")
+                for stage, info in sorted(self.model_fallbacks.items()):
+                    f.write(f"- {stage}:\n")
+                    f.write(f"  - Original: {info['original_provider']} {info['original_model']}\n")
+                    f.write(f"  - Fallback: {info['fallback_provider']} {info['fallback_model']}\n")
+                    f.write(f"  - Reason: {info['error']}\n\n")
+            
             # Grand Totals
             f.write("## Grand Totals\n\n")
             f.write(f"- Total Input Tokens: {summary['grand_total']['input_tokens']:,}\n")
@@ -246,6 +292,13 @@ class TokenTracker:
             f.write("## Stage-by-Stage Breakdown\n\n")
             for stage, data in summary['stages'].items():
                 f.write(f"### {stage}\n\n")
+                
+                # Handle stage input display
+                f.write("#### Stage Input\n")
+                if should_show_stage_inputs() and 'stage_input' in data:
+                    f.write(f"{data['stage_input']}\n\n")
+                else:
+                    f.write("INPUTS HIDDEN FROM USER. TO VIEW, CHANGE STAGE INPUT SETTINGS IN .ENV FILE\n\n")
                 
                 # Stage totals
                 f.write("#### Stage Totals\n")
@@ -294,8 +347,8 @@ class TokenTracker:
             for model, usage in models.items():
                 stage_breakdown['models'][model] = get_cost_breakdown(
                     model,
-                    usage.input_tokens,
-                    usage.output_tokens
+                    usage['input_tokens'],
+                    usage['output_tokens']
                 )
             
             breakdown['stages'][stage] = stage_breakdown

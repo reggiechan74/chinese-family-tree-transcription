@@ -320,7 +320,43 @@ class StageModel(FinalStageModel):
             else:
                 error_msg = f"Error generating content with {self.provider} {self.model_name}: {error_msg}"
             print(error_msg)
-            raise RuntimeError(error_msg)
+            
+            # Try fallback model
+            try:
+                from config.config import get_fallback_model_config
+                fallback = get_fallback_model_config()
+                print(f"Attempting fallback to {fallback['provider']} {fallback['name']}...")
+                
+                # Save original provider and model
+                original_provider = self.provider
+                original_model = self.model_name
+                
+                # Switch to fallback model
+                self.provider = fallback['provider']
+                self.model_name = fallback['name']
+                
+                # Reinitialize client with new provider
+                self._initialize_client()
+                
+                # Try again with fallback model
+                result = self._generate_content(prompt, image)
+                
+                # Store fallback info for reporting
+                result['fallback_info'] = {
+                    'original_provider': original_provider,
+                    'original_model': original_model,
+                    'fallback_provider': self.provider,
+                    'fallback_model': self.model_name,
+                    'error': error_msg
+                }
+                
+                # If successful, return result but keep original error in logs
+                print(f"Fallback successful. Original error was: {error_msg}")
+                return result
+                
+            except Exception as fallback_error:
+                # If fallback fails, raise original error
+                raise RuntimeError(error_msg)
     
     def generate_transcription(self, image_base64: str, token_tracker: TokenTracker = None) -> str:
         """
@@ -359,7 +395,8 @@ class StageModel(FinalStageModel):
                 model_name=self.model_name,
                 input_tokens=result['usage']['input_tokens'],
                 output_tokens=result['usage']['output_tokens'],
-                char_count=self._extract_transcription_chars(content)
+                char_count=self._extract_transcription_chars(content),
+                fallback_info=result.get('fallback_info')
             )
         
         return result['content'].strip()
@@ -402,13 +439,15 @@ class StageModel(FinalStageModel):
         
         # Track token usage if tracker provided
         if token_tracker:
+            content = result['content'].strip()
             token_tracker.add_usage(
                 stage=f"Stage {self.stage}",
                 model=f"Stage {self.stage} Model {self.model_num} - {self.provider.title()} {self.model_name}",
                 model_name=self.model_name,
                 input_tokens=result['usage']['input_tokens'],
                 output_tokens=result['usage']['output_tokens'],
-                char_count=self._extract_transcription_chars(result['content'].strip())
+                char_count=self._extract_transcription_chars(content),
+                fallback_info=result.get('fallback_info')
             )
         
         return result['content'].strip()
@@ -450,13 +489,15 @@ class StageModel(FinalStageModel):
         
         # Track token usage if tracker provided
         if token_tracker:
+            content = result['content'].strip()
             token_tracker.add_usage(
                 stage=f"Stage {self.stage}",
                 model=f"Stage {self.stage} Model {self.model_num} - {self.provider.title()} {self.model_name}",
                 model_name=self.model_name,
                 input_tokens=result['usage']['input_tokens'],
                 output_tokens=result['usage']['output_tokens'],
-                char_count=self._extract_transcription_chars(result['content'].strip())
+                char_count=self._extract_transcription_chars(content),
+                fallback_info=result.get('fallback_info')
             )
         
         return result['content'].strip()
@@ -498,13 +539,15 @@ class StageModel(FinalStageModel):
         
         # Track token usage if tracker provided
         if token_tracker:
+            content = result['content'].strip()
             token_tracker.add_usage(
                 stage=f"Stage {self.stage}",
                 model=f"Stage {self.stage} Model {self.model_num} - {self.provider.title()} {self.model_name}",
                 model_name=self.model_name,
                 input_tokens=result['usage']['input_tokens'],
                 output_tokens=result['usage']['output_tokens'],
-                char_count=self._extract_transcription_chars(result['content'].strip())
+                char_count=self._extract_transcription_chars(content),
+                fallback_info=result.get('fallback_info')
             )
         
         return result['content'].strip()
@@ -534,13 +577,15 @@ class StageModel(FinalStageModel):
         
         # Track token usage if tracker provided
         if token_tracker:
+            content = result['content'].strip()
             token_tracker.add_usage(
                 stage=f"Stage {self.stage}",
                 model=f"Stage {self.stage} Model {self.model_num} - {self.provider.title()} {self.model_name}",
                 model_name=self.model_name,
                 input_tokens=result['usage']['input_tokens'],
                 output_tokens=result['usage']['output_tokens'],
-                char_count=self._extract_transcription_chars(result['content'].strip())
+                char_count=self._extract_transcription_chars(content),
+                fallback_info=result.get('fallback_info')
             )
         
         return result['content'].strip()
@@ -570,13 +615,15 @@ class StageModel(FinalStageModel):
         
         # Track token usage if tracker provided
         if token_tracker:
+            content = result['content'].strip()
             token_tracker.add_usage(
                 stage=f"Stage {self.stage}",
                 model=f"Stage {self.stage} Model {self.model_num} - {self.provider.title()} {self.model_name}",
                 model_name=self.model_name,
                 input_tokens=result['usage']['input_tokens'],
                 output_tokens=result['usage']['output_tokens'],
-                char_count=self._extract_transcription_chars(result['content'].strip())
+                char_count=self._extract_transcription_chars(content),
+                fallback_info=result.get('fallback_info')
             )
         
         return result['content'].strip()
@@ -614,7 +661,8 @@ class StageModel(FinalStageModel):
                 model_name=self.model_name,
                 input_tokens=result['usage']['input_tokens'],
                 output_tokens=result['usage']['output_tokens'],
-                char_count=self._extract_transcription_chars(content)
+                char_count=self._extract_transcription_chars(content),
+                fallback_info=result.get('fallback_info')
             )
         
         return result['content'].strip()

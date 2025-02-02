@@ -81,6 +81,41 @@ Models are configured in `src/config/config.py`. You can:
 - Configure model parameters
 - Set up provider-specific settings
 
+### Confirmed Facts Configuration
+
+The system uses a centralized facts file (`confirmed_facts_do_not_delete.md`) to provide consistent context across all processing stages. This file contains two types of facts:
+
+1. **Document-Specific Facts**: Facts unique to the current document being processed
+   - References to specific historical figures
+   - Document-specific terminology
+   - Unique contextual information
+
+2. **Exercise-Wide Facts**: Facts that apply to all documents in the project
+   - General information about the genealogy
+   - Standard formatting conventions
+   - Common terminology
+
+To update confirmed facts:
+
+1. Edit `confirmed_facts_do_not_delete.md` in the root directory
+2. Maintain the existing structure:
+   ```markdown
+   # Confirmed Facts
+
+   ## Document-Specific Facts
+   - Fact 1
+   - Fact 2
+
+   ## Exercise-Wide Facts
+   - Fact 1
+   - Fact 2
+   ```
+3. Ensure facts are accurate and relevant
+4. Keep the file name as `confirmed_facts_do_not_delete.md`
+5. Commit changes to maintain version history
+
+The system automatically includes these facts in every stage's prompt, ensuring consistent context throughout the processing pipeline.
+
 ## Usage
 
 1. Process a single image:

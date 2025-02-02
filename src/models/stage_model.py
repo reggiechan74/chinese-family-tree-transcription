@@ -94,13 +94,15 @@ class StageModel(FinalStageModel):
     
     def _extract_transcription_chars(self, text: str) -> int:
         """Extract and count characters from Chinese transcription sections."""
-        # For stages 1-2, the entire output is the transcription
+        import re
+        
+        # For stages 1-2, count only Chinese characters in the output
         if self.stage <= 2:
-            return len(text)
+            chinese_chars = re.findall(r'[\u4e00-\u9fff]', text)
+            return len(chinese_chars)
             
         # For stage 3-4, look for sections marked as "Recommended Transcription" or similar
         if self.stage in [3, 4]:
-            import re
             transcription = ""
             patterns = [
                 r"建议的转录：\s*([^#\n]+)",  # Chinese
@@ -113,11 +115,13 @@ class StageModel(FinalStageModel):
                 if matches:
                     transcription = matches[0]
                     break
-            return len(transcription.strip())
+            chinese_chars = re.findall(r'[\u4e00-\u9fff]', transcription.strip())
+            return len(chinese_chars)
             
-        # For stage 5-6, the entire output is the transcription
+        # For stage 5-6, count only Chinese characters in the output
         if self.stage in [5, 6]:
-            return len(text)
+            chinese_chars = re.findall(r'[\u4e00-\u9fff]', text)
+            return len(chinese_chars)
             
         # For stages 7-8, don't count characters as they don't produce Chinese transcriptions
         return 0
@@ -603,13 +607,14 @@ class StageModel(FinalStageModel):
         
         # Track token usage if tracker provided
         if token_tracker:
+            content = result['content'].strip()
             token_tracker.add_usage(
                 stage=f"Stage {self.stage}",
                 model=f"Stage {self.stage} Model {self.model_num} - {self.provider.title()} {self.model_name}",
                 model_name=self.model_name,
                 input_tokens=result['usage']['input_tokens'],
                 output_tokens=result['usage']['output_tokens'],
-                char_count=len(result['content'].strip())
+                char_count=self._extract_transcription_chars(content)
             )
         
         return result['content'].strip()

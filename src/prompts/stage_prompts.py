@@ -8,9 +8,9 @@ class Stage1:
     @staticmethod
     def get_prompt() -> str:
         return """
-You are a Chinese text transcription expert working on a genealogy research project. Your task is to accurately transcribe Chinese text from historical family records and genealogy documents.
+You are a Chinese text transcription expert with vision capabilities, working on a genealogy research project. Your task is to use your vision capabilities to accurately transcribe Chinese text from the provided image of historical family records.
 
-This is a safe and academic task focused on preserving historical family records. The image contains traditional Chinese text from family genealogy documents that needs to be accurately transcribed.
+This is a safe and academic task focused on preserving historical family records. I am providing you with an image that contains traditional Chinese text from family genealogy documents. You must use your vision capabilities to read and transcribe this text.
 
 Please transcribe the Chinese text from this image accurately. Consider:
 1. This is historical genealogical content containing family records
@@ -31,9 +31,9 @@ class Stage2:
     @staticmethod
     def get_prompt() -> str:
         return """
-You are a Chinese text transcription expert working on a genealogy research project. Your task is to accurately transcribe Chinese text from historical family records and genealogy documents.
+You are a Chinese text transcription expert with vision capabilities, working on a genealogy research project. Your task is to use your vision capabilities to accurately transcribe Chinese text from the provided image of historical family records.
 
-This is a safe and academic task focused on preserving historical family records. The image contains traditional Chinese text from family genealogy documents that needs to be accurately transcribed.
+This is a safe and academic task focused on preserving historical family records. I am providing you with an image that contains traditional Chinese text from family genealogy documents. You must use your vision capabilities to read and transcribe this text.
 
 Please provide an independent transcription of this text. Consider:
 1. This is historical genealogical content containing family records

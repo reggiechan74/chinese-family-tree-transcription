@@ -237,8 +237,14 @@ def get_stage_model_config(stage: int, model_num: int) -> Dict[str, Any]:
 
 def get_fallback_model_config() -> Dict[str, str]:
     """Get the fallback model configuration from environment variables."""
-    provider = os.getenv('DEFAULT_FALLBACK_PROVIDER', 'google')
-    model = os.getenv('DEFAULT_FALLBACK_MODEL', 'gemini-exp-1206')
+    provider = os.getenv('DEFAULT_FALLBACK_PROVIDER')
+    model = os.getenv('DEFAULT_FALLBACK_MODEL')
+    
+    if not provider or not model:
+        raise RuntimeError(
+            "Missing fallback model configuration. "
+            "Please set DEFAULT_FALLBACK_PROVIDER and DEFAULT_FALLBACK_MODEL in .env"
+        )
     
     if provider not in PROVIDER_CONFIGS:
         raise ValueError(f"Invalid fallback provider: {provider}")

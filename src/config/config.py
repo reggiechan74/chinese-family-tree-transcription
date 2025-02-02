@@ -55,6 +55,12 @@ PROVIDER_CONFIGS = {
             'mistralai/pixtral-large-2411',              # Vision + Language
             'qwen/qwen-2-vl-72b-instruct'               # Vision + Language
         ]
+    },
+    'together': {
+        'api_key_var': '_api_key_6',
+        'models': [
+            'meta-llama/Llama-3.3-70B-Instruct-Turbo',  # Language only
+        ]
     }
 }
 
@@ -64,7 +70,8 @@ _PROVIDER_API_KEYS = {
     'anthropic': 'ANTHROPIC_API_KEY',
     'google': 'GOOGLE_API_KEY',
     'groq': 'GROQ_API_KEY',
-    'openrouter': 'OPENROUTER_API_KEY'
+    'openrouter': 'OPENROUTER_API_KEY',
+    'together': 'TOGETHER_API_KEY'
 }
 
 def validate_api_key(provider: str) -> None:

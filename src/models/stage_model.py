@@ -33,7 +33,8 @@ class StageModel(FinalStageModel):
         'openai': 'cl100k_base',
         'groq': 'cl100k_base',
         'anthropic': 'cl100k_base',
-        'openrouter': 'cl100k_base'
+        'openrouter': 'cl100k_base',
+        'together': 'cl100k_base'  # Using same as others since it's Llama based
     }
 
     # Models that don't support system messages
@@ -72,6 +73,10 @@ class StageModel(FinalStageModel):
                 base_url="https://openrouter.ai/api/v1",
                 api_key=os.getenv('OPENROUTER_API_KEY')
             )
+            
+        elif self.provider == 'together':
+            from together import Together
+            self._client = Together(api_key=os.getenv('TOGETHER_API_KEY'))
             
         else:
             raise ValueError(f"Unsupported provider: {self.provider}")
@@ -173,18 +178,39 @@ class StageModel(FinalStageModel):
                 }
                 
             elif self.provider == 'groq':
-                response = self._client.chat.completions.create(
-                    model=self.model_name,
-                    messages=[
-                        {"role": "system", "content": "You are a helpful assistant."},
-                        {"role": "user", "content": prompt}
-                    ]
-                )
+                if image:
+                    # For vision tasks, use vision-specific format
+                    response = self._client.chat.completions.create(
+                        model=self.model_name,  # Use configured model name
+                        messages=[
+                            {
+                                "role": "user",
+                                "content": [
+                                    {"type": "text", "text": prompt},
+                                    {
+                                        "type": "image_url",
+                                        "image_url": {
+                                            "url": f"data:image/jpeg;base64,{image}",
+                                        },
+                                    },
+                                ],
+                            }
+                        ]
+                    )
+                else:
+                    # For non-vision tasks, use standard format
+                    response = self._client.chat.completions.create(
+                        model=self.model_name,
+                        messages=[
+                            {"role": "system", "content": "You are a helpful assistant."},
+                            {"role": "user", "content": prompt}
+                        ]
+                    )
                 content = response.choices[0].message.content
                 return {
                     'content': content,
                     'usage': {
-                        'input_tokens': self._count_tokens(prompt),
+                        'input_tokens': self._count_tokens(prompt) + (1000 if image else 0),  # Estimate image tokens
                         'output_tokens': self._count_tokens(content)
                     }
                 }
@@ -255,6 +281,23 @@ class StageModel(FinalStageModel):
                     'usage': {
                         'input_tokens': response.usage.prompt_tokens,
                         'output_tokens': response.usage.completion_tokens
+                    }
+                }
+                
+            elif self.provider == 'together':
+                response = self._client.chat.completions.create(
+                    model=self.model_name,
+                    messages=[
+                        {"role": "system", "content": "You are a helpful assistant."},
+                        {"role": "user", "content": prompt}
+                    ]
+                )
+                content = response.choices[0].message.content
+                return {
+                    'content': content,
+                    'usage': {
+                        'input_tokens': self._count_tokens(prompt),
+                        'output_tokens': self._count_tokens(content)
                     }
                 }
                 

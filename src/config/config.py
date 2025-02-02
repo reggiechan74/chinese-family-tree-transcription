@@ -52,7 +52,8 @@ PROVIDER_CONFIGS = {
             'x-ai/grok-2-vision-1212',                   # Vision + Language
             'qwen/qvq-72b-preview',                      # Vision + Language
             '01-ai/yi-vision',                           # Vision + Language
-            'mistralai/pixtral-large-2411'               # Vision + Language
+            'mistralai/pixtral-large-2411',              # Vision + Language
+            'qwen/qwen-2-vl-72b-instruct'               # Vision + Language
         ]
     }
 }
@@ -129,7 +130,7 @@ def validate_model_capability(provider: str, model: str, stage: int) -> None:
         'anthropic': ['claude-3-5-sonnet-20241022', 'claude-3-opus-20240229'],
         'google': ['gemini-2.0-flash-exp', 'gemini-1.5-pro', 'gemini-exp-1206', 'gemini-pro-vision', 'gemini-2.0-flash-thinking-exp'],
         'groq': ['llama-3.2-90b-vision-preview'],
-        'openrouter': ['meta-llama/llama-3.2-90b-vision-instruct', 'x-ai/grok-2-vision-1212', 'qwen/qvq-72b-preview', '01-ai/yi-vision', 'mistralai/pixtral-large-2411']
+        'openrouter': ['meta-llama/llama-3.2-90b-vision-instruct', 'x-ai/grok-2-vision-1212', 'qwen/qvq-72b-preview', '01-ai/yi-vision', 'mistralai/pixtral-large-2411', 'qwen/qwen-2-vl-72b-instruct']
     }
     
     if vision_required and provider in vision_models:

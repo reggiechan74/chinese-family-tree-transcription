@@ -12,6 +12,7 @@ from models.model_interfaces import TranscriptionModel, ReviewModel, FinalStageM
 from models.model_factory import ModelFactory
 from utils.token_counter import count_tokens, TokenTracker
 from config.config import get_model_init_params
+from config.token_costs import should_show_stage_inputs
 
 class ModelManager:
     """
@@ -93,11 +94,14 @@ class ModelManager:
         if stage_num == 1:
             part1 += "No input from previous stage\n\n"
         elif input_data:
-            for key, data in input_data.items():
-                token_count = count_tokens(data)
-                part1 += f"### {key}\n"
-                part1 += f"Token count: {token_count:,} tokens\n"
-                part1 += f"```\n{data}\n```\n\n"
+            if should_show_stage_inputs():
+                for key, data in input_data.items():
+                    token_count = count_tokens(data)
+                    part1 += f"### {key}\n"
+                    part1 += f"Token count: {token_count:,} tokens\n"
+                    part1 += f"```\n{data}\n```\n\n"
+            else:
+                part1 += "INPUTS HIDDEN FROM USER. TO VIEW, CHANGE STAGE INPUT SETTINGS IN .ENV FILE\n\n"
         
         # Part 2: Generated Output
         part2 = "## Generated Output\n\n"

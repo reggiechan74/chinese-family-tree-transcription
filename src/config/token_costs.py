@@ -9,6 +9,7 @@ from typing import Dict
 TOKEN_TRACKING_ENABLED = os.getenv('TOKEN_TRACKING_ENABLED', 'true').lower() == 'true'
 DISPLAY_REALTIME_USAGE = os.getenv('DISPLAY_REALTIME_USAGE', 'true').lower() == 'true'
 SAVE_USAGE_REPORT = os.getenv('SAVE_USAGE_REPORT', 'true').lower() == 'true'
+SHOW_STAGE_INPUTS = os.getenv('SHOW_STAGE_INPUTS', 'true').lower() == 'true'
 
 # Token costs per 1K tokens
 TOKEN_COSTS = {
@@ -140,3 +141,7 @@ def should_display_realtime_usage() -> bool:
 def should_save_usage_report() -> bool:
     """Check if usage report saving is enabled."""
     return SAVE_USAGE_REPORT and TOKEN_TRACKING_ENABLED
+
+def should_show_stage_inputs() -> bool:
+    """Check if stage inputs should be shown in markdown files."""
+    return SHOW_STAGE_INPUTS

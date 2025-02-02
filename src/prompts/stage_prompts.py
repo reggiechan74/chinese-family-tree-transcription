@@ -5,7 +5,7 @@ import os
 
 def get_confirmed_facts() -> str:
     """Read and format confirmed facts from the file."""
-    facts_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'confirmed_facts.md')
+    facts_path = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), 'confirmed_facts_do_not_delete.md')
     with open(facts_path, 'r', encoding='utf-8') as f:
         return f.read().strip()
 
